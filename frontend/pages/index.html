@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JollyCart</title>
+    <link rel="stylesheet" href="../styles/style.css" />
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="container nav-container">
+        <div class="logo">
+          <a href="#" class="logo-link">
+            <svg
+              class="logo-icon"
+              width="34"
+              height="34"
+              viewBox="0 0 48 48"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M14 9 Q15 6 18 7"
+                stroke="#2f6b3a"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                fill="none"
+              />
+              <circle cx="16" cy="11" r="5.5" fill="#e2574c" />
+              <path d="M25 4 L29.5 14 L20.5 14 Z" fill="#e8a33d" />
+              <circle cx="32" cy="12" r="5" fill="#5b8c3e" />
+              <path
+                d="M6 14H10L14.5 33H35"
+                stroke="#0e5c53"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M13 19H37.5L34.5 31H16.5"
+                stroke="#0e5c53"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="19" cy="39" r="3" fill="#0e5c53" />
+              <circle cx="31" cy="39" r="3" fill="#0e5c53" />
+            </svg>
+            <span class="logo-text">JollyCart</span>
+          </a>
+        </div>
+        <nav>
+          <ul class="nav-links">
+            <li><a href="#">Strona główna</a></li>
+            <li><a href="#categories">Kategorie</a></li>
+            <li><a href="#offers">Ogłoszenia</a></li>
+            <li><a href="login.html">Logowanie</a></li>
+            <li><a href="post-ad.html">Dodaj ogłoszenie</a></li>
+          </ul>
+        </nav>
+        <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="container hero-content">
+        <div class="hero-text">
+          <div class="hero-eyebrow">
+            <span class="dot"></span> Nowe ogłoszenia co kilka minut
+          </div>
+          <h1>Kupuj, sprzedawaj, znajduj okazje w swojej okolicy</h1>
+          <p>
+            Marketplace do dodawania i przeglądania lokalnych ogłoszeń — od
+            elektroniki po mieszkania, bez pośredników i bez zbędnych
+            formalności.
+          </p>
+          <div class="hero-buttons">
+            <a href="#offers" class="btn primary">Przeglądaj ogłoszenia</a>
+            <a href="post-ad.html" class="btn secondary">Dodaj ogłoszenie</a>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="stat">
+            <b>12 400+</b>
+            <span>aktywnych ogłoszeń</span>
+          </div>
+          <div class="stat">
+            <b>38</b>
+            <span>miast w całej Polsce</span>
+          </div>
+          <div class="stat">
+            <b>0 zł</b>
+            <span>prowizji od sprzedaży</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="search-section">
+      <div class="container">
+        <div class="search-box">
+          <input type="text" placeholder="Czego szukasz?" />
+          <select>
+            <option>Wszystkie kategorie</option>
+            <option>Elektronika</option>
+            <option>Motoryzacja</option>
+            <option>Nieruchomości</option>
+            <option>Moda</option>
+            <option>Praca</option>
+          </select>
+          <button>Szukaj</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="categories" class="categories">
+      <div class="container">
+        <div class="section-head">
+          <h2>Kategorie</h2>
+          <span class="section-sub">Wybierz dział, który Cię interesuje</span>
+        </div>
+        <div class="category-grid">
+          <div class="category-card">
+            <span class="icon">📱</span>Elektronika
+          </div>
+          <div class="category-card">
+            <span class="icon">🚗</span>Motoryzacja
+          </div>
+          <div class="category-card">
+            <span class="icon">🏠</span>Nieruchomości
+          </div>
+          <div class="category-card">
+            <span class="icon">🛋</span>Dom i ogród
+          </div>
+          <div class="category-card"><span class="icon">👗</span>Moda</div>
+          <div class="category-card"><span class="icon">💼</span>Praca</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="offers" class="offers">
+      <div class="container">
+        <div class="section-head">
+          <h2>Najnowsze ogłoszenia</h2>
+          <span class="section-sub">Aktualizowane na bieżąco</span>
+        </div>
+        <div class="offers-grid">
+          <div class="offer-card">
+            <img
+              src="https://via.placeholder.com/300x180"
+              alt="iPhone 13 128GB"
+            />
+            <div class="offer-content">
+              <h3>iPhone 13 128GB</h3>
+              <span class="price">2200 zł</span>
+              <p class="location">Warszawa</p>
+              <p class="date">Dodano: dzisiaj</p>
+            </div>
+          </div>
+
+          <div class="offer-card">
+            <img
+              src="https://via.placeholder.com/300x180"
+              alt="Rower górski MTB"
+            />
+            <div class="offer-content">
+              <h3>Rower górski MTB</h3>
+              <span class="price">1400 zł</span>
+              <p class="location">Kraków</p>
+              <p class="date">Dodano: wczoraj</p>
+            </div>
+          </div>
+
+          <div class="offer-card">
+            <img
+              src="https://via.placeholder.com/300x180"
+              alt="Sofa rozkładana"
+            />
+            <div class="offer-content">
+              <h3>Sofa rozkładana</h3>
+              <span class="price">900 zł</span>
+              <p class="location">Gdańsk</p>
+              <p class="date">Dodano: 2 dni temu</p>
+            </div>
+          </div>
+
+          <div class="offer-card">
+            <img
+              src="https://via.placeholder.com/300x180"
+              alt="Laptop Dell Inspiron"
+            />
+            <div class="offer-content">
+              <h3>Laptop Dell Inspiron</h3>
+              <span class="price">1800 zł</span>
+              <p class="location">Poznań</p>
+              <p class="date">Dodano: dzisiaj</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container footer-content">
+        <div>
+          <h3>JollyCart</h3>
+          <p>Serwis z ogłoszeniami lokalnymi.</p>
+        </div>
+        <div>
+          <h4>Linki</h4>
+          <ul>
+            <li><a href="#">O nas</a></li>
+            <li><a href="#">Kontakt</a></li>
+            <li><a href="#">Regulamin</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Konto</h4>
+          <ul>
+            <li><a href="login.html">Logowanie</a></li>
+            <li><a href="register.html">Rejestracja</a></li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+
+    <script src="../scripts/menuToggle.js"></script>
+    <script src="../scripts/navScroll.js"></script>
+  </body>
+</html>
