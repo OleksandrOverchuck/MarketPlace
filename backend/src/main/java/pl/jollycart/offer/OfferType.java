@@ -1,5 +1,7 @@
 package pl.jollycart.offer;
 
-public class OfferType {
-    
+public enum OfferType {
+    SALE,
+    SERVICE,
+    JOB
 }

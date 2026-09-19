@@ -1,5 +1,7 @@
 package pl.jollycart.offer;
 
-public class OfferStatus {
-    
+public enum OfferStatus {
+    ACTIVE,
+    INACTIVE,
+    SOLD
 }

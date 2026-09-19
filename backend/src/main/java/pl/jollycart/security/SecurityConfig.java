@@ -16,7 +16,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
+            HttpSecurity http,
+            CustomOAuth2UserService customOAuth2UserService
     ) throws Exception {
 
         http
@@ -42,21 +43,48 @@ public class SecurityConfig {
                                 "/api/auth/login"
                         ).permitAll()
 
+                        // OAuth2
                         .requestMatchers(
                                 "/oauth2/**",
                                 "/login/oauth2/**"
                         ).permitAll()
 
+                        // Wszystkie pozostałe endpointy
+                        // wymagają zalogowania
                         .anyRequest().authenticated()
                 )
 
+                // Używamy sesji HTTP, nie JWT
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(
                                 SessionCreationPolicy.IF_REQUIRED
                         )
                 )
 
-                .csrf(csrf -> csrf.disable());
+                // Na tym etapie CSRF jest wyłączony
+                .csrf(csrf -> csrf.disable())
+
+                // Google OAuth2 / OpenID Connect
+                .oauth2Login(oauth2 -> oauth2
+
+                        .loginPage(
+                                "/oauth2/authorization/google"
+                        )
+
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .oidcUserService(
+                                        customOAuth2UserService
+                                )
+                        )
+
+                        // Po poprawnym logowaniu
+                        // przechodzimy do endpointu
+                        // zwracającego aktualnego użytkownika
+                        .defaultSuccessUrl(
+                                "/api/auth/me",
+                                true
+                        )
+                );
 
         return http.build();
     }
@@ -71,8 +99,11 @@ public class SecurityConfig {
             CustomUserDetailsService userDetailsService,
             PasswordEncoder passwordEncoder
     ) {
+
         DaoAuthenticationProvider provider =
-                new DaoAuthenticationProvider(userDetailsService);
+                new DaoAuthenticationProvider(
+                        userDetailsService
+                );
 
         provider.setPasswordEncoder(passwordEncoder);
 
@@ -83,6 +114,7 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             DaoAuthenticationProvider authenticationProvider
     ) {
+
         return new org.springframework.security.authentication.ProviderManager(
                 authenticationProvider
         );
