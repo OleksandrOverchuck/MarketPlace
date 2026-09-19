@@ -3,6 +3,8 @@ package pl.jollycart.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,7 +21,6 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests(auth -> auth
-                        // Strony i zasoby publiczne
                         .requestMatchers(
                                 "/",
                                 "/index.html",
@@ -28,7 +29,6 @@ public class SecurityConfig {
                                 "/images/**"
                         ).permitAll()
 
-                        // Publiczne endpointy API
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/offers",
@@ -36,25 +36,17 @@ public class SecurityConfig {
                                 "/api/categories"
                         ).permitAll()
 
-                        // Rejestracja
                         .requestMatchers(
                                 HttpMethod.POST,
-                                "/api/auth/register"
-                        ).permitAll()
-
-                        // Logowanie - ETAP 6
-                        .requestMatchers(
-                                HttpMethod.POST,
+                                "/api/auth/register",
                                 "/api/auth/login"
                         ).permitAll()
 
-                        // OAuth2 - ETAP 8
                         .requestMatchers(
                                 "/oauth2/**",
                                 "/login/oauth2/**"
                         ).permitAll()
 
-                        // Pozostałe endpointy wymagają zalogowania
                         .anyRequest().authenticated()
                 )
 
@@ -72,5 +64,27 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider(
+            CustomUserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder
+    ) {
+        DaoAuthenticationProvider provider =
+                new DaoAuthenticationProvider(userDetailsService);
+
+        provider.setPasswordEncoder(passwordEncoder);
+
+        return provider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            DaoAuthenticationProvider authenticationProvider
+    ) {
+        return new org.springframework.security.authentication.ProviderManager(
+                authenticationProvider
+        );
     }
 }

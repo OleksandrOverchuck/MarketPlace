@@ -1,12 +1,17 @@
 package pl.jollycart.auth;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.web.bind.annotation.*;
+import pl.jollycart.auth.dto.LoginRequest;
 import pl.jollycart.auth.dto.RegisterRequest;
 import pl.jollycart.user.dto.UserResponse;
 
@@ -15,6 +20,9 @@ import pl.jollycart.user.dto.UserResponse;
 public class AuthController {
 
     private final AuthService authService;
+
+    private final SecurityContextRepository securityContextRepository =
+            new HttpSessionSecurityContextRepository();
 
     public AuthController(AuthService authService) {
         this.authService = authService;
@@ -29,5 +37,35 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<UserResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse
+    ) {
+        Authentication authentication =
+                authService.authenticate(request);
+
+        SecurityContext context =
+                SecurityContextHolder.createEmptyContext();
+
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+
+        securityContextRepository.saveContext(
+                context,
+                httpRequest,
+                httpResponse
+        );
+
+        return ResponseEntity.ok(
+                UserResponse.from(
+                        authService.getUserByEmail(
+                                authentication.getName()
+                        )
+                )
+        );
     }
 }
