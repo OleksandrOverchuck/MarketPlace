@@ -1,5 +1,7 @@
 package pl.jollycart.user;
 
-public class AuthProvider {
-    
+public enum AuthProvider {
+
+    LOCAL,
+    GOOGLE
 }
