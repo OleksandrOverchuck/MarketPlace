@@ -19,4 +19,28 @@ public class CategoryService {
     public List<Category> getAllCategories() {
         return categoryRepository.findAllByOrderByNameAsc();
     }
+
+    public void createInitialCategories() {
+
+        createIfNotExists("Elektronika");
+        createIfNotExists("Motoryzacja");
+        createIfNotExists("Dom i ogród");
+        createIfNotExists("Moda");
+        createIfNotExists("Sport i rekreacja");
+        createIfNotExists("Praca");
+        createIfNotExists("Usługi");
+        createIfNotExists("Nauka i edukacja");
+        createIfNotExists("Inne");
+    }
+
+    private void createIfNotExists(String name) {
+
+        if (!categoryRepository.existsByName(name)) {
+
+            Category category = new Category();
+            category.setName(name);
+
+            categoryRepository.save(category);
+        }
+    }
 }
