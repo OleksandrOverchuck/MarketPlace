@@ -1,5 +1,7 @@
 package pl.jollycart.job;
 
-public class JobApplicationStatus {
-    
+public enum JobApplicationStatus {
+    PENDING,
+    ACCEPTED,
+    REJECTED
 }

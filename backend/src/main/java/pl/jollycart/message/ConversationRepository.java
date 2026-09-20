@@ -1,5 +1,7 @@
 package pl.jollycart.message;
 
-public class ConversationRepository {
-    
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ConversationRepository
+        extends JpaRepository<Conversation, Long> {
 }
