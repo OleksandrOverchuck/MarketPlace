@@ -12,10 +12,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import pl.jollycart.file.StoredFile;
 import pl.jollycart.offer.Offer;
 import pl.jollycart.user.User;
 
@@ -42,6 +44,10 @@ public class JobApplication {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cv_file_id")
+    private StoredFile cvFile;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -97,6 +103,14 @@ public class JobApplication {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public StoredFile getCvFile() {
+        return cvFile;
+    }
+
+    public void setCvFile(StoredFile cvFile) {
+        this.cvFile = cvFile;
     }
 
     public JobApplicationStatus getStatus() {

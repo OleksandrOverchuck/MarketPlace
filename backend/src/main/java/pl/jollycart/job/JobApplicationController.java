@@ -3,6 +3,7 @@ package pl.jollycart.job;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,10 +11,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import pl.jollycart.job.dto.CreateJobApplicationRequest;
+import pl.jollycart.job.dto.CvFileResponse;
 import pl.jollycart.job.dto.JobApplicationResponse;
 
 @RestController
@@ -74,5 +78,26 @@ public class JobApplicationController {
                         currentEmail
                 )
         );
+    }
+
+    @PostMapping(
+            value = "/{applicationId}/cv",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<CvFileResponse> uploadCv(
+            @PathVariable Long applicationId,
+            Authentication authentication,
+            @RequestParam("file") MultipartFile file
+    ) {
+        String currentEmail = authentication.getName();
+
+        CvFileResponse response =
+                jobApplicationService.uploadCv(
+                        applicationId,
+                        currentEmail,
+                        file
+                );
+
+        return ResponseEntity.ok(response);
     }
 }

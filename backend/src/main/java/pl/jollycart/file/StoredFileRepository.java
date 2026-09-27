@@ -1,5 +1,7 @@
 package pl.jollycart.file;
 
-public class StoredFileRepository {
-    
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface StoredFileRepository
+        extends JpaRepository<StoredFile, Long> {
 }
