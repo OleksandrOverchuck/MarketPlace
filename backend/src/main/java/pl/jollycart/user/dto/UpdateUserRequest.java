@@ -17,6 +17,23 @@ public record UpdateUserRequest(
                 max = 1000,
                 message = "URL avatara może mieć maksymalnie 1000 znaków"
         )
-        String avatarUrl
+        String avatarUrl,
+
+        @Size(
+                max = 30,
+                message = "Numer telefonu może mieć maksymalnie 30 znaków"
+        )
+        String phone,
+
+        @Size(
+                max = 100,
+                message = "Lokalizacja może mieć maksymalnie 100 znaków"
+        )
+        String location
 ) {
+
+    // Zachowuje zgodność z istniejącymi testami i kodem.
+    public UpdateUserRequest(String nickname, String avatarUrl) {
+        this(nickname, avatarUrl, null, null);
+    }
 }

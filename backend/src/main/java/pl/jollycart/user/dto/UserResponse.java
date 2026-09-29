@@ -8,6 +8,8 @@ public record UserResponse(
         String nickname,
         String email,
         String avatarUrl,
+        String phone,
+        String location,
         AuthProvider authProvider
 ) {
 
@@ -17,6 +19,8 @@ public record UserResponse(
                 user.getNickname(),
                 user.getEmail(),
                 user.getAvatarUrl(),
+                user.getPhone(),
+                user.getLocation(),
                 user.getAuthProvider()
         );
     }

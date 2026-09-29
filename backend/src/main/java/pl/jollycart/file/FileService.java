@@ -8,6 +8,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -81,6 +84,33 @@ public class FileService {
         }
 
         return storedFileName;
+    }
+
+    public Resource loadFile(String storedFileName) {
+
+        if (storedFileName == null || storedFileName.isBlank()) {
+            throw new IllegalArgumentException("Nazwa pliku jest wymagana");
+        }
+
+        Path filePath = uploadDirectory
+                .resolve(storedFileName)
+                .normalize();
+
+        if (!filePath.getParent().equals(uploadDirectory)) {
+            throw new IllegalArgumentException("Nieprawidłowa ścieżka pliku");
+        }
+
+        try {
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new IllegalArgumentException("Plik nie został znaleziony");
+            }
+
+            return resource;
+        } catch (IOException e) {
+            throw new IllegalStateException("Nie udało się odczytać pliku", e);
+        }
     }
 
     public void deleteFile(String storedFileName) {

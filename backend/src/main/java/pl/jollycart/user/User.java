@@ -61,6 +61,16 @@ public class User {
     private String avatarUrl;
 
     @Column(
+            length = 30
+    )
+    private String phone;
+
+    @Column(
+            length = 100
+    )
+    private String location;
+
+    @Column(
             name = "created_at",
             nullable = false
     )
@@ -152,6 +162,24 @@ public class User {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
 

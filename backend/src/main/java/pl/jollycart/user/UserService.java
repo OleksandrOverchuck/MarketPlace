@@ -68,9 +68,20 @@ public class UserService {
 
         user.setNickname(request.nickname());
         user.setAvatarUrl(request.avatarUrl());
+        user.setPhone(normalize(request.phone()));
+        user.setLocation(normalize(request.location()));
 
         User savedUser = userRepository.save(user);
 
         return UserResponse.from(savedUser);
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

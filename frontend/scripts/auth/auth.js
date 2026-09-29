@@ -146,13 +146,8 @@ async function handleRegister(event) {
     return;
   }
 
-  if (password.length < 8 || password.length > 100) {
-    showAuthMessage("Hasło musi mieć od 8 do 100 znaków.", true);
-    return;
-  }
-
   if (password !== confirmPassword) {
-    showAuthMessage("Hasła nie są takie same.", true);
+    showAuthMessage("Hasła nie są takie same.", "error");
     return;
   }
 
@@ -190,13 +185,13 @@ async function handleRegister(event) {
         text ||
         `Rejestracja nie powiodła się. Kod HTTP: ${response.status}`;
 
-      showAuthMessage(message, true);
+      showAuthMessage(message, "error");
       return;
     }
 
     showAuthMessage(
       "Konto zostało utworzone. Za chwilę przejdziesz do logowania.",
-      false,
+      "success",
     );
 
     setTimeout(() => {
@@ -320,17 +315,7 @@ function displayLoggedUser(user) {
     <div class="account-dropdown">
       <div class="account-user">
         <div class="account-avatar">
-          <svg viewBox="0 0 24 24">
-            <circle
-              cx="12"
-              cy="8"
-              r="4"
-            ></circle>
-
-            <path
-              d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"
-            ></path>
-          </svg>
+          ${renderAvatar(user)}
         </div>
 
         <div class="account-user-info">
@@ -349,6 +334,14 @@ function displayLoggedUser(user) {
       </div>
 
       <div class="account-menu">
+
+       <a
+          href="settings.html"
+          class="account-menu-item"
+        >
+          Profil
+        </a>
+
         <a
           href="post-ad.html"
           class="account-menu-item account-menu-cta"
@@ -390,20 +383,7 @@ function displayLoggedUser(user) {
         >
           Szukam pracy
         </a>
-
-        <a
-          href="profile.html"
-          class="account-menu-item"
-        >
-          Profil
-        </a>
-
-        <a
-          href="settings.html"
-          class="account-menu-item"
-        >
-          Ustawienia
-        </a>
+      
       </div>
 
       <div class="account-logout-wrapper">
@@ -478,6 +458,39 @@ async function handleLogout() {
    POMOCNICZE
    ========================= */
 
+function getAvatarSrc(avatarUrl) {
+  if (!avatarUrl) {
+    return null;
+  }
+
+  if (avatarUrl.startsWith("http://") || avatarUrl.startsWith("https://")) {
+    return avatarUrl;
+  }
+
+  return `${API_BASE_URL}${avatarUrl}`;
+}
+
+function renderAvatar(user) {
+  const avatarSrc = getAvatarSrc(user.avatarUrl);
+
+  if (avatarSrc) {
+    return `
+      <img
+        src="${escapeHtml(avatarSrc)}"
+        alt="Zdjęcie profilowe"
+        class="account-avatar-image"
+      />
+    `;
+  }
+
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="8" r="4"></circle>
+      <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
+    </svg>
+  `;
+}
+
 function escapeHtml(value) {
   const div = document.createElement("div");
 
@@ -486,7 +499,7 @@ function escapeHtml(value) {
   return div.innerHTML;
 }
 
-function showAuthMessage(message, isError = false) {
+function showAuthMessage(message, isError) {
   let messageElement = document.querySelector(".auth-message");
 
   if (!messageElement) {
