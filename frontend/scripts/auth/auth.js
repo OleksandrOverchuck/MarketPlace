@@ -2,11 +2,11 @@ const API_BASE_URL = "http://localhost:8080";
 
 document.addEventListener("DOMContentLoaded", () => {
   setupLoginPage();
+  setupRegisterPage();
   setupHomePage();
   setupSearchShortcut();
 });
 
-// Po kliknięciu "Szukaj" w menu ustawia kursor w polu wyszukiwania
 function setupSearchShortcut() {
   const searchLink = document.querySelector("[data-focus-search]");
   const searchInput = document.querySelector(".search-box input");
@@ -16,32 +16,40 @@ function setupSearchShortcut() {
   }
 
   searchLink.addEventListener("click", () => {
-    // Czekamy, aż zakończy się płynne przewijanie
-    setTimeout(() => searchInput.focus({ preventScroll: true }), 600);
+    setTimeout(() => {
+      searchInput.focus({ preventScroll: true });
+    }, 600);
   });
 }
+
+/* =========================
+   LOGOWANIE
+   ========================= */
 
 function setupLoginPage() {
   const loginForm = document.querySelector(".auth-form");
   const googleButton = document.querySelector(".oauth-btn");
 
-  if (loginForm) {
+  /*
+   * Jeżeli na stronie jest formularz logowania,
+   * podpinamy obsługę logowania.
+   */
+  if (
+    loginForm &&
+    document.getElementById("email") &&
+    document.getElementById("password") &&
+    !document.getElementById("username")
+  ) {
     loginForm.addEventListener("submit", handleLogin);
   }
 
+  /*
+   * Google działa zarówno na login.html,
+   * jak i na register.html.
+   */
   if (googleButton) {
     googleButton.addEventListener("click", handleGoogleLogin);
   }
-}
-
-function setupHomePage() {
-  const authUserElement = document.getElementById("auth-user");
-
-  if (!authUserElement) {
-    return;
-  }
-
-  loadCurrentUser();
 }
 
 async function handleLogin(event) {
@@ -50,11 +58,15 @@ async function handleLogin(event) {
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
 
+  if (!emailInput || !passwordInput) {
+    return;
+  }
+
   const email = emailInput.value.trim();
   const password = passwordInput.value;
 
   if (!email || !password) {
-    showLoginMessage("Email i hasło są wymagane.", true);
+    showAuthMessage("Email i hasło są wymagane.", true);
     return;
   }
 
@@ -73,11 +85,11 @@ async function handleLogin(event) {
 
     if (!response.ok) {
       if (response.status === 401) {
-        showLoginMessage("Nieprawidłowy email lub hasło.", true);
+        showAuthMessage("Nieprawidłowy email lub hasło.", true);
         return;
       }
 
-      showLoginMessage("Wystąpił błąd podczas logowania.", true);
+      showAuthMessage("Wystąpił błąd podczas logowania.", true);
 
       return;
     }
@@ -90,12 +102,153 @@ async function handleLogin(event) {
   } catch (error) {
     console.error("Błąd logowania:", error);
 
-    showLoginMessage("Nie udało się połączyć z serwerem.", true);
+    showAuthMessage("Nie udało się połączyć z serwerem.", true);
   }
 }
 
+/* =========================
+   GOOGLE
+   ========================= */
+
 function handleGoogleLogin() {
   window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
+}
+
+/* =========================
+   REJESTRACJA
+   ========================= */
+
+function setupRegisterPage() {
+  const registerForm = document.querySelector(".auth-form");
+
+  /*
+   * Rozróżniamy rejestrację od logowania
+   * po obecności pola username.
+   */
+  const usernameInput = document.getElementById("username");
+  const confirmPasswordInput = document.getElementById("confirmPassword");
+
+  if (registerForm && usernameInput && confirmPasswordInput) {
+    registerForm.addEventListener("submit", handleRegister);
+  }
+}
+
+async function handleRegister(event) {
+  event.preventDefault();
+
+  const nickname = document.getElementById("username").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+
+  if (!nickname || !email || !password || !confirmPassword) {
+    showAuthMessage("Wypełnij wszystkie pola.", "error");
+    return;
+  }
+
+  if (password.length < 8 || password.length > 100) {
+    showAuthMessage("Hasło musi mieć od 8 do 100 znaków.", true);
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    showAuthMessage("Hasła nie są takie same.", true);
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        nickname: nickname,
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword,
+      }),
+    });
+
+    const text = await response.text();
+
+    let data = null;
+
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        data = null;
+      }
+    }
+
+    if (!response.ok) {
+      const message =
+        data?.message ||
+        data?.error ||
+        text ||
+        `Rejestracja nie powiodła się. Kod HTTP: ${response.status}`;
+
+      showAuthMessage(message, true);
+      return;
+    }
+
+    showAuthMessage(
+      "Konto zostało utworzone. Za chwilę przejdziesz do logowania.",
+      false,
+    );
+
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 1000);
+  } catch (error) {
+    console.error("BŁĄD REJESTRACJI - pełny błąd:", error);
+    console.error("BŁĄD REJESTRACJI - message:", error.message);
+    console.error("BŁĄD REJESTRACJI - stack:", error.stack);
+
+    showAuthMessage(`Błąd: ${error.message}`, true);
+  }
+}
+
+/* =========================
+   POBIERANIE BŁĘDU Z BACKENDU
+   ========================= */
+
+async function readErrorMessage(response) {
+  try {
+    const data = await response.json();
+
+    if (typeof data === "string") {
+      return data;
+    }
+
+    if (data.message) {
+      return data.message;
+    }
+
+    if (data.error) {
+      return data.error;
+    }
+
+    return "";
+  } catch (error) {
+    return "";
+  }
+}
+
+/* =========================
+   AKTUALNY UŻYTKOWNIK
+   ========================= */
+
+function setupHomePage() {
+  const authUserElement = document.getElementById("auth-user");
+
+  if (!authUserElement) {
+    return;
+  }
+
+  loadCurrentUser();
 }
 
 async function loadCurrentUser() {
@@ -134,8 +287,8 @@ function displayLoggedUser(user) {
     return;
   }
 
-  // Ukrywa linki widoczne tylko dla gości (Strona główna, Kategorie, Ogłoszenia)
   document.documentElement.classList.add("logged-in");
+
   localStorage.setItem("loggedIn", "1");
 
   authUserElement.innerHTML = `
@@ -148,8 +301,15 @@ function displayLoggedUser(user) {
         class="account-icon"
         viewBox="0 0 24 24"
       >
-        <circle cx="12" cy="8" r="4"></circle>
-        <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
+        <circle
+          cx="12"
+          cy="8"
+          r="4"
+        ></circle>
+
+        <path
+          d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"
+        ></path>
       </svg>
 
       <span>Twoje konto</span>
@@ -158,20 +318,22 @@ function displayLoggedUser(user) {
     </button>
 
     <div class="account-dropdown">
-
       <div class="account-user">
-
         <div class="account-avatar">
-          <svg
-            viewBox="0 0 24 24"
-          >
-            <circle cx="12" cy="8" r="4"></circle>
-            <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
+          <svg viewBox="0 0 24 24">
+            <circle
+              cx="12"
+              cy="8"
+              r="4"
+            ></circle>
+
+            <path
+              d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"
+            ></path>
           </svg>
         </div>
 
         <div class="account-user-info">
-
           <p class="account-nickname">
             ${escapeHtml(user.nickname)}
           </p>
@@ -179,9 +341,7 @@ function displayLoggedUser(user) {
           <p class="account-id">
             id: ${escapeHtml(String(user.id))}
           </p>
-
         </div>
-
       </div>
 
       <div class="account-menu-title">
@@ -189,51 +349,64 @@ function displayLoggedUser(user) {
       </div>
 
       <div class="account-menu">
-
-        <a href="post-ad.html"
-           class="account-menu-item account-menu-cta">
+        <a
+          href="post-ad.html"
+          class="account-menu-item account-menu-cta"
+        >
           Dodaj ogłoszenie
         </a>
 
-        <a href="my-offers.html"
-           class="account-menu-item">
+        <a
+          href="my-offers.html"
+          class="account-menu-item"
+        >
           Ogłoszenia
         </a>
 
-        <a href="chat.html"
-           class="account-menu-item">
+        <a
+          href="chat.html"
+          class="account-menu-item"
+        >
           Czat
         </a>
 
-        <a href="payments.html"
-           class="account-menu-item">
+        <a
+          href="payments.html"
+          class="account-menu-item"
+        >
           Płatności
         </a>
 
-        <a href="reviews.html"
-           class="account-menu-item">
+        <a
+          href="reviews.html"
+          class="account-menu-item"
+        >
           Oceny
         </a>
 
-        <a href="jobs.html"
-           class="account-menu-item">
+        <a
+          href="jobs.html"
+          class="account-menu-item"
+        >
           Szukam pracy
         </a>
 
-        <a href="profile.html"
-           class="account-menu-item">
+        <a
+          href="profile.html"
+          class="account-menu-item"
+        >
           Profil
         </a>
 
-        <a href="settings.html"
-           class="account-menu-item">
+        <a
+          href="settings.html"
+          class="account-menu-item"
+        >
           Ustawienia
         </a>
-
       </div>
 
       <div class="account-logout-wrapper">
-
         <button
           type="button"
           class="account-menu-item account-logout"
@@ -241,9 +414,7 @@ function displayLoggedUser(user) {
         >
           Wyloguj
         </button>
-
       </div>
-
     </div>
   `;
 
@@ -261,8 +432,8 @@ function displayGuestUser() {
     return;
   }
 
-  // Przywraca linki dla gości
   document.documentElement.classList.remove("logged-in");
+
   localStorage.removeItem("loggedIn");
 
   authUserElement.innerHTML = "";
@@ -276,13 +447,9 @@ function displayGuestUser() {
   authUserElement.appendChild(loginLink);
 }
 
-function escapeHtml(value) {
-  const div = document.createElement("div");
-
-  div.textContent = value;
-
-  return div.innerHTML;
-}
+/* =========================
+   WYLOGOWANIE
+   ========================= */
 
 async function handleLogout() {
   try {
@@ -293,7 +460,9 @@ async function handleLogout() {
 
     if (response.ok || response.status === 204) {
       localStorage.removeItem("loggedIn");
+
       window.location.href = "index.html";
+
       return;
     }
 
@@ -305,7 +474,19 @@ async function handleLogout() {
   }
 }
 
-function showLoginMessage(message, isError) {
+/* =========================
+   POMOCNICZE
+   ========================= */
+
+function escapeHtml(value) {
+  const div = document.createElement("div");
+
+  div.textContent = value;
+
+  return div.innerHTML;
+}
+
+function showAuthMessage(message, isError = false) {
   let messageElement = document.querySelector(".auth-message");
 
   if (!messageElement) {

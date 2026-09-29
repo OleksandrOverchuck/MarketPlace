@@ -35,14 +35,17 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
+                        // Publiczne zasoby
                         .requestMatchers(
                                 "/",
                                 "/index.html",
                                 "/css/**",
                                 "/js/**",
-                                "/images/**"
+                                "/images/**",
+                                "/error"
                         ).permitAll()
 
+                        // Publiczne API ofert
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/offers",
@@ -50,17 +53,28 @@ public class SecurityConfig {
                                 "/api/categories"
                         ).permitAll()
 
+                        // Rejestracja i zwykłe logowanie
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/auth/register",
                                 "/api/auth/login"
                         ).permitAll()
 
+                        // Tymczasowo pozwalamy również na GET,
+                        // żeby GET /api/auth/register nie powodował
+                        // przekierowania do Google.
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/auth/register"
+                        ).permitAll()
+
+                        // Google OAuth
                         .requestMatchers(
                                 "/oauth2/**",
                                 "/login/oauth2/**"
                         ).permitAll()
 
+                        // Pozostałe endpointy wymagają logowania
                         .anyRequest().authenticated()
                 )
 
@@ -73,16 +87,19 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .oauth2Login(oauth2 -> oauth2
-                        .loginPage(
-                                "/oauth2/authorization/google"
-                        )
+
+                        // NIE ustawiamy:
+                        // .loginPage("/oauth2/authorization/google")
+
                         .userInfoEndpoint(userInfo -> userInfo
                                 .oidcUserService(
                                         customOAuth2UserService
                                 )
                         )
+
                         .defaultSuccessUrl(
-                                FRONTEND_URL + "/frontend/pages/index.html",
+                                FRONTEND_URL
+                                        + "/frontend/pages/index.html",
                                 true
                         )
                 );
@@ -96,12 +113,12 @@ public class SecurityConfig {
         CorsConfiguration configuration =
                 new CorsConfiguration();
 
-       configuration.setAllowedOrigins(
-        List.of(
-                "http://localhost:5501",
-                "http://127.0.0.1:5501"
-        )
-);
+        configuration.setAllowedOrigins(
+                List.of(
+                        "http://localhost:5501",
+                        "http://127.0.0.1:5501"
+                )
+        );
 
         configuration.setAllowedMethods(
                 List.of(

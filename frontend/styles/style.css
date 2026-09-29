@@ -616,6 +616,10 @@ h3 {
     display: flex;
   }
 
+  .nav-links > li:has(#auth-user) {
+    order: -1;
+  }
+
   .menu-toggle {
     display: block;
   }
@@ -1044,13 +1048,6 @@ h3 {
   background: #f2f6f6;
 
   color: #0e5c53;
-}
-
-/* Wyróżniona pozycja "Dodaj ogłoszenie" */
-
-.nav-links .account-menu-cta {
-  color: var(--teal);
-  font-weight: 700;
 }
 
 /* Ikony menu */
