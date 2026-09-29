@@ -2,43 +2,73 @@
   const navbar = document.querySelector(".navbar");
   if (!navbar) return;
 
-  const prefersReducedMotion = window.matchMedia(
-    "(prefers-reduced-motion: reduce)",
-  ).matches;
+  // Od tylu px od góry strony navbar dostaje cień i gradientową linię
+  const SCROLLED_AT = 12;
+
+  // Do tylu px od góry strony navbar jest zawsze widoczny
+  const ALWAYS_SHOW_BELOW = 30;
+
+  // Ile px trzeba przescrollować w danym kierunku, żeby navbar zareagował
+  // (chroni przed drganiem przy drobnych ruchach kółkiem/gładzikiem)
+  const HIDE_AFTER = 10;
+  const SHOW_AFTER = 6;
 
   let lastY = window.scrollY;
-  let cooldown = false;
+  let accumulated = 0;
+  let ticking = false;
 
-  function triggerJiggle() {
-    if (prefersReducedMotion) return;
-    navbar.classList.remove("jiggle");
-    // force reflow so the animation can restart
-    void navbar.offsetWidth;
-    navbar.classList.add("jiggle");
+  function showNavbar() {
+    navbar.classList.remove("nav-hidden");
   }
 
-  navbar.addEventListener("animationend", () => {
-    navbar.classList.remove("jiggle");
-  });
+  function hideNavbar() {
+    navbar.classList.add("nav-hidden");
+  }
+
+  function update() {
+    ticking = false;
+
+    const y = window.scrollY;
+    const diff = y - lastY;
+    lastY = y;
+
+    navbar.classList.toggle("scrolled", y > SCROLLED_AT);
+
+    if (y <= ALWAYS_SHOW_BELOW) {
+      accumulated = 0;
+      showNavbar();
+      return;
+    }
+
+    if (diff === 0) return;
+
+    // Zmiana kierunku zeruje licznik
+    if (Math.sign(diff) !== Math.sign(accumulated)) {
+      accumulated = 0;
+    }
+
+    accumulated += diff;
+
+    if (accumulated > HIDE_AFTER) {
+      hideNavbar();
+    } else if (accumulated < -SHOW_AFTER) {
+      showNavbar();
+    }
+  }
 
   window.addEventListener(
     "scroll",
     () => {
-      const y = window.scrollY;
-
-      navbar.classList.toggle("scrolled", y > 12);
-
-      const scrollingDown = y > lastY + 4;
-      if (scrollingDown && y > 12 && !cooldown) {
-        triggerJiggle();
-        cooldown = true;
-        setTimeout(() => {
-          cooldown = false;
-        }, 700);
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(update);
       }
-
-      lastY = y;
     },
     { passive: true },
   );
+
+  // Nawigacja klawiaturą (Tab) do elementu w navbarze ma go odsłonić
+  navbar.addEventListener("focusin", showNavbar);
+
+  update();
 })();

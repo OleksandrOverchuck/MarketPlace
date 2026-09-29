@@ -52,9 +52,11 @@ h3 {
   z-index: 1000;
   box-shadow: 0 1px 0 rgba(28, 35, 33, 0.08);
   transition:
-    box-shadow 0.35s ease,
-    transform 0.35s ease;
+    box-shadow 0.4s ease,
+    opacity 0.4s ease,
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   transform: translateY(0);
+  will-change: transform;
 }
 
 .navbar::after {
@@ -79,7 +81,16 @@ h3 {
 }
 
 .navbar.nav-hidden {
-  transform: translateY(-100%);
+  /* dodatkowe 4px, żeby schować też gradientową linię ::after pod navbarem */
+  transform: translateY(calc(-100% - 4px));
+  opacity: 0;
+  box-shadow: none;
+
+  /* chowanie: trochę krócej i płynnie na starcie i na końcu */
+  transition:
+    box-shadow 0.3s ease,
+    opacity 0.35s ease,
+    transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 .nav-container {
@@ -766,12 +777,6 @@ h3 {
   .btn {
     transition: none;
   }
-  .navbar {
-    transition: box-shadow 0.35s ease;
-  }
-  .navbar.nav-hidden {
-    transform: none;
-  }
 }
 
 /* =========================
@@ -1041,6 +1046,13 @@ h3 {
   color: #0e5c53;
 }
 
+/* Wyróżniona pozycja "Dodaj ogłoszenie" */
+
+.nav-links .account-menu-cta {
+  color: var(--teal);
+  font-weight: 700;
+}
+
 /* Ikony menu */
 
 .account-menu-icon {
@@ -1074,9 +1086,9 @@ h3 {
   background: #f5f5f5;
 }
 
-/* 
+/* =========================
    GUEST
-    */
+   ========================= */
 
 .nav-links .auth-login-link {
   color: var(--ink-soft);
@@ -1093,9 +1105,9 @@ h3 {
   color: var(--teal);
 }
 
-/* 
+/* =========================
    NAV DROPDOWN (Ogłoszenia / Kategorie / Szukaj)
-   */
+   ========================= */
 
 /* Płynne przewijanie do sekcji + odstęp na sticky navbar */
 
