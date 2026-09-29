@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JollyCart</title>
+    <script>
+      // Ustawia klasę od razu, zanim strona się wyrenderuje (brak "migania" linków)
+      if (localStorage.getItem("loggedIn") === "1") {
+        document.documentElement.classList.add("logged-in");
+      }
+    </script>
     <link rel="stylesheet" href="../styles/style.css" />
   </head>
   <body>
@@ -52,15 +58,44 @@
         </div>
         <nav>
           <ul class="nav-links">
-            <li><a href="#">Strona główna</a></li>
-            <li><a href="#categories">Kategorie</a></li>
-            <li><a href="#offers">Ogłoszenia</a></li>
-            <li>
-              <div id="auth-user">
-                <a href="login.html">Logowanie</a>
+            <li class="guest-only"><a href="#">Strona główna</a></li>
+            <li class="guest-only"><a href="#categories">Kategorie</a></li>
+            <li class="guest-only"><a href="#offers">Ogłoszenia</a></li>
+            <li class="logged-only">
+              <div class="nav-dropdown">
+                <button
+                  type="button"
+                  class="nav-dropdown-button"
+                  aria-label="Przejdź do sekcji"
+                >
+                  <svg
+                    class="nav-dropdown-icon"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 7h16M4 12h16M4 17h16"></path>
+                  </svg>
+                  <span>Przeglądaj</span>
+                  <span class="nav-dropdown-arrow"></span>
+                </button>
+
+                <div class="nav-dropdown-menu">
+                  <a href="#offers" class="account-menu-item">Ogłoszenia</a>
+                  <a href="#categories" class="account-menu-item">Kategorie</a>
+                  <a href="#search" class="account-menu-item" data-focus-search
+                    >Szukaj</a
+                  >
+                </div>
               </div>
             </li>
-            <li><a href="post-ad.html">Dodaj ogłoszenie</a></li>
+            <li>
+              <div id="auth-user">
+                <a href="login.html" class="auth-login-link">Logowanie</a>
+              </div>
+            </li>
+            <li class="guest-only">
+              <a href="post-ad.html">Dodaj ogłoszenie</a>
+            </li>
           </ul>
         </nav>
         <button class="menu-toggle" onclick="toggleMenu()">☰</button>
@@ -101,7 +136,7 @@
       </div>
     </section>
 
-    <section class="search-section">
+    <section id="search" class="search-section">
       <div class="container">
         <div class="search-box">
           <input type="text" placeholder="Czego szukasz?" />

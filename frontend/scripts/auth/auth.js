@@ -3,7 +3,23 @@ const API_BASE_URL = "http://localhost:8080";
 document.addEventListener("DOMContentLoaded", () => {
   setupLoginPage();
   setupHomePage();
+  setupSearchShortcut();
 });
+
+// Po kliknięciu "Szukaj" w menu ustawia kursor w polu wyszukiwania
+function setupSearchShortcut() {
+  const searchLink = document.querySelector("[data-focus-search]");
+  const searchInput = document.querySelector(".search-box input");
+
+  if (!searchLink || !searchInput) {
+    return;
+  }
+
+  searchLink.addEventListener("click", () => {
+    // Czekamy, aż zakończy się płynne przewijanie
+    setTimeout(() => searchInput.focus({ preventScroll: true }), 600);
+  });
+}
 
 function setupLoginPage() {
   const loginForm = document.querySelector(".auth-form");
@@ -32,7 +48,6 @@ async function handleLogin(event) {
   event.preventDefault();
 
   const emailInput = document.getElementById("email");
-
   const passwordInput = document.getElementById("password");
 
   const email = emailInput.value.trim();
@@ -40,20 +55,16 @@ async function handleLogin(event) {
 
   if (!email || !password) {
     showLoginMessage("Email i hasło są wymagane.", true);
-
     return;
   }
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: "POST",
-
       headers: {
         "Content-Type": "application/json",
       },
-
       credentials: "include",
-
       body: JSON.stringify({
         email: email,
         password: password,
@@ -63,7 +74,6 @@ async function handleLogin(event) {
     if (!response.ok) {
       if (response.status === 401) {
         showLoginMessage("Nieprawidłowy email lub hasło.", true);
-
         return;
       }
 
@@ -124,42 +134,124 @@ function displayLoggedUser(user) {
     return;
   }
 
-  authUserElement.innerHTML = "";
+  // Ukrywa linki widoczne tylko dla gości (Strona główna, Kategorie, Ogłoszenia)
+  document.documentElement.classList.add("logged-in");
+  localStorage.setItem("loggedIn", "1");
 
-  const nickname = document.createElement("span");
+  authUserElement.innerHTML = `
+    <button
+      type="button"
+      class="account-button"
+      aria-label="Twoje konto"
+    >
+      <svg
+        class="account-icon"
+        viewBox="0 0 24 24"
+      >
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
+      </svg>
 
-  nickname.textContent = `Witaj, ${user.nickname}`;
+      <span>Twoje konto</span>
 
-  const profileLink = document.createElement("a");
+      <span class="account-arrow"></span>
+    </button>
 
-  profileLink.href = "#";
+    <div class="account-dropdown">
 
-  profileLink.textContent = "Mój profil";
+      <div class="account-user">
 
-  profileLink.addEventListener("click", (event) => {
-    event.preventDefault();
+        <div class="account-avatar">
+          <svg
+            viewBox="0 0 24 24"
+          >
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
+          </svg>
+        </div>
 
-    alert(
-      `Zalogowany użytkownik:\n\n` +
-        `Nick: ${user.nickname}\n` +
-        `Email: ${user.email}\n` +
-        `Provider: ${user.authProvider}`,
-    );
-  });
+        <div class="account-user-info">
 
-  const logoutButton = document.createElement("button");
+          <p class="account-nickname">
+            ${escapeHtml(user.nickname)}
+          </p>
 
-  logoutButton.type = "button";
+          <p class="account-id">
+            id: ${escapeHtml(String(user.id))}
+          </p>
 
-  logoutButton.textContent = "Wyloguj";
+        </div>
 
-  logoutButton.addEventListener("click", handleLogout);
+      </div>
 
-  authUserElement.appendChild(nickname);
+      <div class="account-menu-title">
+        Twoje konto
+      </div>
 
-  authUserElement.appendChild(profileLink);
+      <div class="account-menu">
 
-  authUserElement.appendChild(logoutButton);
+        <a href="post-ad.html"
+           class="account-menu-item account-menu-cta">
+          Dodaj ogłoszenie
+        </a>
+
+        <a href="my-offers.html"
+           class="account-menu-item">
+          Ogłoszenia
+        </a>
+
+        <a href="chat.html"
+           class="account-menu-item">
+          Czat
+        </a>
+
+        <a href="payments.html"
+           class="account-menu-item">
+          Płatności
+        </a>
+
+        <a href="reviews.html"
+           class="account-menu-item">
+          Oceny
+        </a>
+
+        <a href="jobs.html"
+           class="account-menu-item">
+          Szukam pracy
+        </a>
+
+        <a href="profile.html"
+           class="account-menu-item">
+          Profil
+        </a>
+
+        <a href="settings.html"
+           class="account-menu-item">
+          Ustawienia
+        </a>
+
+      </div>
+
+      <div class="account-logout-wrapper">
+
+        <button
+          type="button"
+          class="account-menu-item account-logout"
+          id="logout-button"
+        >
+          Wyloguj
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  const logoutButton = document.getElementById("logout-button");
+
+  if (logoutButton) {
+    logoutButton.addEventListener("click", handleLogout);
+  }
 }
 
 function displayGuestUser() {
@@ -169,15 +261,27 @@ function displayGuestUser() {
     return;
   }
 
+  // Przywraca linki dla gości
+  document.documentElement.classList.remove("logged-in");
+  localStorage.removeItem("loggedIn");
+
   authUserElement.innerHTML = "";
 
   const loginLink = document.createElement("a");
 
   loginLink.href = "login.html";
-
-  loginLink.textContent = "Zaloguj się";
+  loginLink.textContent = "Logowanie";
+  loginLink.className = "auth-login-link";
 
   authUserElement.appendChild(loginLink);
+}
+
+function escapeHtml(value) {
+  const div = document.createElement("div");
+
+  div.textContent = value;
+
+  return div.innerHTML;
 }
 
 async function handleLogout() {
@@ -188,8 +292,8 @@ async function handleLogout() {
     });
 
     if (response.ok || response.status === 204) {
+      localStorage.removeItem("loggedIn");
       window.location.href = "index.html";
-
       return;
     }
 
