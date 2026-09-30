@@ -22,7 +22,9 @@ public class MessageController {
 
     private final MessageService messageService;
 
-    public MessageController(MessageService messageService) {
+    public MessageController(
+            MessageService messageService
+    ) {
         this.messageService = messageService;
     }
 
@@ -32,7 +34,8 @@ public class MessageController {
             Authentication authentication,
             @Valid @RequestBody CreateMessageRequest request
     ) {
-        String currentEmail = authentication.getName();
+        String currentEmail =
+                authentication.getName();
 
         MessageResponse response =
                 messageService.createMessage(
@@ -51,7 +54,8 @@ public class MessageController {
             @PathVariable Long conversationId,
             Authentication authentication
     ) {
-        String currentEmail = authentication.getName();
+        String currentEmail =
+                authentication.getName();
 
         List<MessageResponse> messages =
                 messageService.getConversationMessages(

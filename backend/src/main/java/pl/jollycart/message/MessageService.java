@@ -36,20 +36,21 @@ public class MessageService {
             String currentEmail,
             CreateMessageRequest request
     ) {
-        User currentUser = userRepository.findByEmail(currentEmail)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Użytkownik nie został znaleziony"
-                        )
-                );
+        User currentUser =
+                userRepository.findByEmail(currentEmail)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Użytkownik nie został znaleziony"
+                                )
+                        );
 
-        Conversation conversation = conversationRepository
-                .findById(conversationId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Rozmowa nie została znaleziona"
-                        )
-                );
+        Conversation conversation =
+                conversationRepository.findById(conversationId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Rozmowa nie została znaleziona"
+                                )
+                        );
 
         boolean participant =
                 participantRepository
@@ -81,12 +82,13 @@ public class MessageService {
             Long conversationId,
             String currentEmail
     ) {
-        User currentUser = userRepository.findByEmail(currentEmail)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Użytkownik nie został znaleziony"
-                        )
-                );
+        User currentUser =
+                userRepository.findByEmail(currentEmail)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Użytkownik nie został znaleziony"
+                                )
+                        );
 
         if (!participantRepository
                 .existsByConversationIdAndUserId(
@@ -99,7 +101,9 @@ public class MessageService {
             );
         }
 
-        if (!conversationRepository.existsById(conversationId)) {
+        if (!conversationRepository.existsById(
+                conversationId
+        )) {
             throw new IllegalArgumentException(
                     "Rozmowa nie została znaleziona"
             );

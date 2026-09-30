@@ -1,23 +1,29 @@
 package pl.jollycart.message.dto;
 
-import pl.jollycart.message.Conversation;
-import pl.jollycart.message.ConversationParticipant;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
+import pl.jollycart.message.Conversation;
+import pl.jollycart.message.ConversationParticipant;
+
 public record ConversationResponse(
+
         Long id,
+
         LocalDateTime createdAt,
+
         LocalDateTime updatedAt,
+
         List<ParticipantResponse> participants
+
 ) {
 
     public static ConversationResponse from(
             Conversation conversation
     ) {
         List<ParticipantResponse> participants =
-                conversation.getParticipants()
+                conversation
+                        .getParticipants()
                         .stream()
                         .map(ParticipantResponse::from)
                         .toList();
@@ -31,9 +37,13 @@ public record ConversationResponse(
     }
 
     public record ParticipantResponse(
+
             Long userId,
+
             String nickname,
+
             String avatarUrl
+
     ) {
 
         public static ParticipantResponse from(

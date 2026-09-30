@@ -402,14 +402,7 @@ function displayLoggedUser(user) {
         >
           Oceny
         </a>
-
-        <a
-          href="jobs.html"
-          class="account-menu-item"
-        >
-          Szukam pracy
-        </a>
-      
+    
       </div>
 
       <div class="account-logout-wrapper">

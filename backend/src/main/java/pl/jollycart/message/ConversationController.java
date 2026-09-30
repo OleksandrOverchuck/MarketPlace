@@ -81,8 +81,10 @@ public class ConversationController {
     }
 
     public record CreateConversationRequest(
+
             @NotNull(message = "ID użytkownika jest wymagane")
             Long otherUserId
+
     ) {
     }
 }

@@ -30,7 +30,6 @@ public class ConversationService {
             String currentEmail,
             Long otherUserId
     ) {
-
         User currentUser = userRepository.findByEmail(currentEmail)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
@@ -51,38 +50,67 @@ public class ConversationService {
             );
         }
 
-        Conversation conversation = new Conversation();
+        /*
+         * Najpierw sprawdzamy, czy rozmowa między tymi
+         * dwoma użytkownikami już istnieje.
+         */
+        return conversationRepository
+                .findConversationBetweenUsers(
+                        currentUser.getId(),
+                        otherUser.getId()
+                )
+                .orElseGet(() -> {
 
-        Conversation savedConversation =
-                conversationRepository.save(conversation);
+                    Conversation conversation =
+                            new Conversation();
 
-        ConversationParticipant firstParticipant =
-                new ConversationParticipant();
+                    Conversation savedConversation =
+                            conversationRepository.save(conversation);
 
-        firstParticipant.setConversation(savedConversation);
-        firstParticipant.setUser(currentUser);
+                    ConversationParticipant firstParticipant =
+                            new ConversationParticipant();
 
-        participantRepository.save(firstParticipant);
+                    firstParticipant.setConversation(
+                            savedConversation
+                    );
 
-        ConversationParticipant secondParticipant =
-                new ConversationParticipant();
+                    firstParticipant.setUser(
+                            currentUser
+                    );
 
-        secondParticipant.setConversation(savedConversation);
-        secondParticipant.setUser(otherUser);
+                    participantRepository.save(
+                            firstParticipant
+                    );
 
-        participantRepository.save(secondParticipant);
+                    ConversationParticipant secondParticipant =
+                            new ConversationParticipant();
 
-        savedConversation.getParticipants().add(firstParticipant);
-        savedConversation.getParticipants().add(secondParticipant);
+                    secondParticipant.setConversation(
+                            savedConversation
+                    );
 
-        return savedConversation;
+                    secondParticipant.setUser(
+                            otherUser
+                    );
+
+                    participantRepository.save(
+                            secondParticipant
+                    );
+
+                    savedConversation.getParticipants()
+                            .add(firstParticipant);
+
+                    savedConversation.getParticipants()
+                            .add(secondParticipant);
+
+                    return savedConversation;
+                });
     }
 
     @Transactional(readOnly = true)
     public List<Conversation> getUserConversations(
             String currentEmail
     ) {
-
         User currentUser = userRepository.findByEmail(currentEmail)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
@@ -102,7 +130,6 @@ public class ConversationService {
             Long conversationId,
             String currentEmail
     ) {
-
         User currentUser = userRepository.findByEmail(currentEmail)
                 .orElseThrow(() ->
                         new IllegalArgumentException(

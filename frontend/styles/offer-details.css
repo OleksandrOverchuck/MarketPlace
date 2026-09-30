@@ -7,23 +7,44 @@
 .offer-details-back {
   display: inline-block;
   margin-bottom: 22px;
+
   color: var(--teal-dark);
   font-weight: 700;
   text-decoration: none;
 }
 
+.offer-details-back:hover {
+  text-decoration: underline;
+}
+
+/* =========================
+   GŁÓWNA KARTA OGŁOSZENIA
+   ========================= */
+
 .offer-details-card {
   display: grid;
-  grid-template-columns: minmax(320px, 0.95fr) minmax(360px, 1.05fr);
+
+  grid-template-columns:
+    minmax(320px, 0.95fr)
+    minmax(360px, 1.05fr);
+
   overflow: hidden;
+
   background: var(--white);
+
   border: 1px solid var(--line);
   border-radius: 14px;
-  box-shadow: 0 10px 28px rgba(28,35,33,.07);
+
+  box-shadow: 0 10px 28px rgba(28, 35, 33, 0.07);
 }
+
+/* =========================
+   LEWA STRONA - ZDJĘCIA
+   ========================= */
 
 .offer-details-media {
   min-height: 520px;
+
   background: var(--paper-deep);
 }
 
@@ -35,67 +56,262 @@
 
 .offer-details-gallery img {
   display: block;
+
   width: 100%;
   height: 100%;
   min-height: 520px;
+
   object-fit: cover;
 }
 
 .offer-details-no-image {
   min-height: 520px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   flex-direction: column;
-  color: var(--ink-soft);
+
   gap: 10px;
+
+  color: var(--ink-soft);
 }
 
-.offer-details-no-image span { font-size: 70px; }
-.offer-details-no-image p { margin: 0; }
+.offer-details-no-image span {
+  font-size: 70px;
+}
 
-.offer-details-content { padding: 42px; }
+.offer-details-no-image p {
+  margin: 0;
+}
+
+/* =========================
+   PRAWA STRONA
+   ========================= */
+
+.offer-details-content {
+  padding: 42px;
+}
+
+/* =========================
+   KATEGORIA / TYP
+   ========================= */
 
 .offer-details-topline {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+
   gap: 15px;
+
   margin-bottom: 15px;
 }
 
-.offer-details-category { color: var(--teal); font-weight: 700; }
-.offer-details-type { color: var(--ink-soft); font-size: 14px; }
-.offer-details-content h1 { margin: 0 0 15px; font-size: 42px; line-height: 1.08; }
-.offer-details-price { margin-bottom: 28px; font-family: "Zilla Slab", serif; font-size: 32px; font-weight: 700; }
+.offer-details-category {
+  color: var(--teal);
+
+  font-weight: 700;
+}
+
+.offer-details-type {
+  color: var(--ink-soft);
+
+  font-size: 14px;
+}
+
+/* =========================
+   TYTUŁ
+   ========================= */
+
+.offer-details-content h1 {
+  margin: 0 0 15px;
+
+  font-size: 42px;
+  line-height: 1.08;
+}
+
+/* =========================
+   CENA
+   ========================= */
+
+.offer-details-price {
+  margin-bottom: 22px;
+
+  font-family: "Zilla Slab", serif;
+
+  font-size: 32px;
+  font-weight: 700;
+}
+
+/* =========================
+   WYŚLIJ WIADOMOŚĆ
+   ========================= */
+
+.send-message-button {
+  display: block;
+
+  width: 100%;
+
+  margin: 0 0 28px;
+
+  padding: 15px 20px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: var(--teal-dark);
+
+  color: #ffffff;
+
+  font-family: inherit;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  text-align: center;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.15s ease;
+}
+
+.send-message-button:hover {
+  background: var(--teal);
+
+  transform: translateY(-1px);
+}
+
+.send-message-button:active {
+  transform: translateY(0);
+}
+
+.send-message-button:disabled {
+  opacity: 0.6;
+
+  cursor: wait;
+
+  transform: none;
+}
+
+/* =========================
+   INFORMACJE
+   ========================= */
 
 .offer-details-info-grid {
   display: grid;
+
   grid-template-columns: 1fr 1fr;
+
   gap: 14px;
+
   margin-bottom: 34px;
 }
 
 .offer-details-info-grid div {
   padding: 15px;
+
   border-radius: 8px;
+
   background: var(--paper-deep);
 }
 
 .offer-details-info-grid span,
-.offer-details-info-grid strong { display: block; }
-.offer-details-info-grid span { margin-bottom: 5px; color: var(--ink-soft); font-size: 12px; }
-.offer-details-info-grid strong { color: var(--ink); }
-.offer-details-description { border-top: 1px solid var(--line); padding-top: 25px; }
-.offer-details-description h2 { margin-bottom: 10px; font-size: 22px; }
-.offer-details-description p { margin: 0; white-space: pre-wrap; line-height: 1.7; color: var(--ink-soft); }
+.offer-details-info-grid strong {
+  display: block;
+}
+
+.offer-details-info-grid span {
+  margin-bottom: 5px;
+
+  color: var(--ink-soft);
+
+  font-size: 12px;
+}
+
+.offer-details-info-grid strong {
+  color: var(--ink);
+}
+
+/* =========================
+   OPIS
+   ========================= */
+
+.offer-details-description {
+  border-top: 1px solid var(--line);
+
+  padding-top: 25px;
+}
+
+.offer-details-description h2 {
+  margin-bottom: 10px;
+
+  font-size: 22px;
+}
+
+.offer-details-description p {
+  margin: 0;
+
+  white-space: pre-wrap;
+
+  line-height: 1.7;
+
+  color: var(--ink-soft);
+}
+
+/* =========================
+   LOADING / ERROR
+   ========================= */
+
 .offer-details-loading,
-.offer-details-error { padding: 60px 25px; text-align: center; background: var(--white); border: 1px solid var(--line); border-radius: 12px; }
+.offer-details-error {
+  padding: 60px 25px;
+
+  text-align: center;
+
+  background: var(--white);
+
+  border: 1px solid var(--line);
+
+  border-radius: 12px;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
 
 @media (max-width: 800px) {
-  .offer-details-page { padding: 35px 14px 60px; }
-  .offer-details-card { grid-template-columns: 1fr; }
-  .offer-details-media, .offer-details-gallery, .offer-details-gallery img, .offer-details-no-image { min-height: 330px; }
-  .offer-details-content { padding: 28px 22px; }
-  .offer-details-content h1 { font-size: 34px; }
-  .offer-details-info-grid { grid-template-columns: 1fr; }
+  .offer-details-page {
+    padding: 35px 14px 60px;
+  }
+
+  .offer-details-card {
+    grid-template-columns: 1fr;
+  }
+
+  .offer-details-media,
+  .offer-details-gallery,
+  .offer-details-gallery img,
+  .offer-details-no-image {
+    min-height: 330px;
+  }
+
+  .offer-details-content {
+    padding: 28px 22px;
+  }
+
+  .offer-details-content h1 {
+    font-size: 34px;
+  }
+
+  .offer-details-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .send-message-button {
+    margin-bottom: 24px;
+  }
 }

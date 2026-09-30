@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Wiadomości - JollyCart</title>
+
+    <link rel="stylesheet" href="../styles/chat.css" />
+  </head>
+
+  <body>
+    <div class="chat-page">
+      <!-- =========================
+         NAGŁÓWEK CZATU
+         ========================= -->
+
+      <header class="chat-header">
+        <button
+          id="back-button"
+          class="back-button"
+          type="button"
+          aria-label="Wróć"
+        >
+          ←
+        </button>
+
+        <div class="chat-user">
+          <div id="chat-user-avatar" class="chat-avatar">?</div>
+
+          <div class="chat-user-info">
+            <div id="chat-user-name" class="chat-user-name">Rozmowa</div>
+
+            <div id="chat-user-status" class="chat-user-status">Wiadomości</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- =========================
+         WIADOMOŚCI
+         ========================= -->
+
+      <main id="messages-container" class="messages-container"></main>
+
+      <!-- =========================
+         WYSYŁANIE WIADOMOŚCI
+         ========================= -->
+
+      <form id="message-form" class="message-form">
+        <input
+          id="message-input"
+          type="text"
+          placeholder="Napisz wiadomość..."
+          autocomplete="off"
+          maxlength="5000"
+        />
+
+        <button id="send-message-button" type="submit">Wyślij</button>
+      </form>
+    </div>
+
+    <!-- AUTH -->
+    <script src="../scripts/auth/auth.js"></script>
+
+    <!-- CHAT -->
+    <script src="../scripts/chat/chat.js"></script>
+  </body>
+</html>
