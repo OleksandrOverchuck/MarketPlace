@@ -50,6 +50,24 @@ public class OfferController {
         );
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<List<OfferResponse>> getMyOffers(
+            Authentication authentication
+    ) {
+        String currentEmail = authentication.getName();
+
+        return ResponseEntity.ok(
+                offerService.getOffersByUserEmail(currentEmail)
+        );
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> getActiveOffersCount() {
+    return ResponseEntity.ok(
+            offerService.countActiveOffers()
+    );
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<OfferResponse> getOfferById(
             @PathVariable Long id

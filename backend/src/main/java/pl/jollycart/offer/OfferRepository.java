@@ -45,4 +45,6 @@ public interface OfferRepository extends JpaRepository<Offer, Long> {
             BigDecimal minPrice,
             BigDecimal maxPrice
     );
+
+    long countByStatus(OfferStatus status);
 }

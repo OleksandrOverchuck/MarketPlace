@@ -244,6 +244,32 @@ function setupHomePage() {
   }
 
   loadCurrentUser();
+  loadActiveOffersCount();
+}
+
+async function loadActiveOffersCount() {
+  const countElement = document.getElementById("active-offers-count");
+
+  if (!countElement) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/offers/count`, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      console.error("Nie udało się pobrać liczby aktywnych ogłoszeń.");
+      return;
+    }
+
+    const count = await response.json();
+
+    countElement.textContent = Number(count).toLocaleString("pl-PL");
+  } catch (error) {
+    console.error("Błąd pobierania liczby aktywnych ogłoszeń:", error);
+  }
 }
 
 async function loadCurrentUser() {

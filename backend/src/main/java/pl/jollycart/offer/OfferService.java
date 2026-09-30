@@ -58,6 +58,7 @@ public class OfferService {
         offer.setTitle(request.title());
         offer.setDescription(request.description());
         offer.setPrice(request.price());
+        offer.setLocation(request.location());
         offer.setType(request.type());
         offer.setStatus(OfferStatus.ACTIVE);
         offer.setUser(user);
@@ -88,6 +89,24 @@ public class OfferService {
                 .findByStatusOrderByCreatedAtDesc(
                         OfferStatus.ACTIVE
                 )
+                .stream()
+                .map(OfferResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<OfferResponse> getOffersByUserEmail(
+            String email
+    ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Użytkownik nie został znaleziony"
+                        )
+                );
+
+        return offerRepository
+                .findByUserIdOrderByCreatedAtDesc(user.getId())
                 .stream()
                 .map(OfferResponse::from)
                 .toList();
@@ -211,6 +230,7 @@ public class OfferService {
         offer.setTitle(request.title());
         offer.setDescription(request.description());
         offer.setPrice(request.price());
+        offer.setLocation(request.location());
         offer.setType(request.type());
         offer.setStatus(request.status());
         offer.setCategory(category);
@@ -218,6 +238,11 @@ public class OfferService {
         Offer savedOffer = offerRepository.save(offer);
 
         return OfferResponse.from(savedOffer);
+    }
+
+    @Transactional(readOnly = true)
+    public long countActiveOffers() {
+        return offerRepository.countByStatus(OfferStatus.ACTIVE);
     }
 
     public void deleteOffer(

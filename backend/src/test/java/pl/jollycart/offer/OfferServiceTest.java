@@ -6,15 +6,20 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+
 import org.mockito.Mock;
+
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import pl.jollycart.category.Category;
@@ -64,6 +69,7 @@ class OfferServiceTest {
                 "Telefon Samsung",
                 "Telefon w bardzo dobrym stanie",
                 new BigDecimal("2500.00"),
+                "Opole",
                 OfferType.SALE,
                 1L
         );
@@ -88,18 +94,51 @@ class OfferServiceTest {
                 );
 
         assertNotNull(response);
-        assertEquals(1L, response.id());
-        assertEquals("Telefon Samsung", response.title());
+
+        assertEquals(
+                1L,
+                response.id()
+        );
+
+        assertEquals(
+                "Telefon Samsung",
+                response.title()
+        );
+
         assertEquals(
                 new BigDecimal("2500.00"),
                 response.price()
         );
-        assertEquals(OfferType.SALE, response.type());
-        assertEquals(OfferStatus.ACTIVE, response.status());
-        assertEquals(1L, response.userId());
-        assertEquals("TestUser", response.nickname());
-        assertEquals(1L, response.categoryId());
-        assertEquals("Elektronika", response.categoryName());
+
+        assertEquals(
+                OfferType.SALE,
+                response.type()
+        );
+
+        assertEquals(
+                OfferStatus.ACTIVE,
+                response.status()
+        );
+
+        assertEquals(
+                1L,
+                response.userId()
+        );
+
+        assertEquals(
+                "TestUser",
+                response.nickname()
+        );
+
+        assertEquals(
+                1L,
+                response.categoryId()
+        );
+
+        assertEquals(
+                "Elektronika",
+                response.categoryName()
+        );
 
         verify(offerRepository).save(any(Offer.class));
     }
@@ -111,6 +150,7 @@ class OfferServiceTest {
                 "Telefon Samsung",
                 "Telefon w bardzo dobrym stanie",
                 new BigDecimal("2500.00"),
+                "Opole",
                 OfferType.SALE,
                 1L
         );
@@ -132,8 +172,10 @@ class OfferServiceTest {
                 exception.getMessage()
         );
 
-        verify(offerRepository, never())
-                .save(any(Offer.class));
+        verify(
+                offerRepository,
+                never()
+        ).save(any(Offer.class));
     }
 
     @Test
@@ -152,6 +194,7 @@ class OfferServiceTest {
                 "Zmieniony tytuł",
                 "Zmieniony opis",
                 new BigDecimal("2000.00"),
+                "Opole",
                 OfferType.SALE,
                 OfferStatus.ACTIVE,
                 1L
@@ -175,11 +218,15 @@ class OfferServiceTest {
                 exception.getMessage()
         );
 
-        verify(offerRepository, never())
-                .save(any(Offer.class));
+        verify(
+                offerRepository,
+                never()
+        ).save(any(Offer.class));
 
-        verify(categoryRepository, never())
-                .findById(anyLong());
+        verify(
+                categoryRepository,
+                never()
+        ).findById(anyLong());
     }
 
     @Test
@@ -199,6 +246,7 @@ class OfferServiceTest {
         newCategory.setName("Motoryzacja");
 
         Offer offer = new Offer();
+
         offer.setId(1L);
         offer.setTitle("Stary tytuł");
         offer.setDescription("Stary opis");
@@ -212,6 +260,7 @@ class OfferServiceTest {
                 "Nowy tytuł",
                 "Nowy opis",
                 new BigDecimal("1500.00"),
+                "Opole",
                 OfferType.SERVICE,
                 OfferStatus.ACTIVE,
                 2L
@@ -225,7 +274,8 @@ class OfferServiceTest {
 
         when(offerRepository.save(any(Offer.class)))
                 .thenAnswer(invocation ->
-                        invocation.getArgument(0));
+                        invocation.getArgument(0)
+                );
 
         OfferResponse response =
                 offerService.updateOffer(
@@ -235,16 +285,41 @@ class OfferServiceTest {
                 );
 
         assertNotNull(response);
-        assertEquals("Nowy tytuł", response.title());
-        assertEquals("Nowy opis", response.description());
+
+        assertEquals(
+                "Nowy tytuł",
+                response.title()
+        );
+
+        assertEquals(
+                "Nowy opis",
+                response.description()
+        );
+
         assertEquals(
                 new BigDecimal("1500.00"),
                 response.price()
         );
-        assertEquals(OfferType.SERVICE, response.type());
-        assertEquals(OfferStatus.ACTIVE, response.status());
-        assertEquals(2L, response.categoryId());
-        assertEquals("Motoryzacja", response.categoryName());
+
+        assertEquals(
+                OfferType.SERVICE,
+                response.type()
+        );
+
+        assertEquals(
+                OfferStatus.ACTIVE,
+                response.status()
+        );
+
+        assertEquals(
+                2L,
+                response.categoryId()
+        );
+
+        assertEquals(
+                "Motoryzacja",
+                response.categoryName()
+        );
 
         verify(offerRepository).save(offer);
     }
