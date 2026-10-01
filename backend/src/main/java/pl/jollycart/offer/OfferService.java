@@ -3,6 +3,8 @@ package pl.jollycart.offer;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -125,78 +127,160 @@ public class OfferService {
     }
 
     @Transactional(readOnly = true)
-    public List<OfferResponse> searchOffers(
-            String search,
-            Long categoryId,
-            OfferType type,
-            BigDecimal minPrice,
-            BigDecimal maxPrice
-    ) {
+public List<OfferResponse> searchOffers(
+        String search,
+        String location,
+        Long categoryId,
+        OfferType type,
+        BigDecimal minPrice,
+        BigDecimal maxPrice
+) {
 
-        List<Offer> offers;
-
-        if (search != null && !search.isBlank()) {
-
-            offers = offerRepository
-                    .findByStatusAndTitleContainingIgnoreCaseOrStatusAndDescriptionContainingIgnoreCaseOrderByCreatedAtDesc(
-                            OfferStatus.ACTIVE,
-                            search,
-                            OfferStatus.ACTIVE,
-                            search
-                    );
-
-        } else if (categoryId != null) {
-
-            offers = offerRepository
-                    .findByStatusAndCategoryIdOrderByCreatedAtDesc(
-                            OfferStatus.ACTIVE,
-                            categoryId
-                    );
-
-        } else if (type != null) {
-
-            offers = offerRepository
-                    .findByStatusAndTypeOrderByCreatedAtDesc(
-                            OfferStatus.ACTIVE,
-                            type
-                    );
-
-        } else if (minPrice != null && maxPrice != null) {
-
-            offers = offerRepository
-                    .findByStatusAndPriceBetweenOrderByCreatedAtDesc(
-                            OfferStatus.ACTIVE,
-                            minPrice,
-                            maxPrice
-                    );
-
-        } else if (minPrice != null) {
-
-            offers = offerRepository
-                    .findByStatusAndPriceGreaterThanEqualOrderByCreatedAtDesc(
-                            OfferStatus.ACTIVE,
-                            minPrice
-                    );
-
-        } else if (maxPrice != null) {
-
-            offers = offerRepository
-                    .findByStatusAndPriceLessThanEqualOrderByCreatedAtDesc(
-                            OfferStatus.ACTIVE,
-                            maxPrice
-                    );
-
-        } else {
-
-            offers = offerRepository
-                    .findByStatusOrderByCreatedAtDesc(
+    Specification<Offer> specification =
+            (root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(
+                            root.get("status"),
                             OfferStatus.ACTIVE
                     );
+
+    /*
+     * WYSZUKIWANIE TEKSTOWE
+     *
+     * Szukamy w:
+     * - tytule
+     * - opisie
+     *
+     * Tytuł LUB opis.
+     */
+    if (search != null && !search.isBlank()) {
+
+        String searchPattern =
+                "%" + search.trim().toLowerCase() + "%";
+
+        specification = specification.and(
+                (root, query, criteriaBuilder) ->
+                        criteriaBuilder.or(
+                                criteriaBuilder.like(
+                                        criteriaBuilder.lower(
+                                                root.get("title")
+                                        ),
+                                        searchPattern
+                                ),
+                                criteriaBuilder.like(
+                                        criteriaBuilder.lower(
+                                                root.get("description")
+                                        ),
+                                        searchPattern
+                                )
+                        )
+        );
+    }
+
+    /*
+     * LOKALIZACJA
+     *
+     * Np.:
+     * Opole
+     * opole
+     * Opol
+     *
+     * Wszystko będzie działało bez rozróżniania wielkości liter.
+     */
+    if (location != null && !location.isBlank()) {
+
+        String locationPattern =
+                "%" + location.trim().toLowerCase() + "%";
+
+        specification = specification.and(
+                (root, query, criteriaBuilder) ->
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(
+                                        root.get("location")
+                                ),
+                                locationPattern
+                        )
+        );
+    }
+
+    /*
+     * KATEGORIA
+     */
+    if (categoryId != null) {
+
+        specification = specification.and(
+                (root, query, criteriaBuilder) ->
+                        criteriaBuilder.equal(
+                                root.get("category").get("id"),
+                                categoryId
+                        )
+        );
+    }
+
+    /*
+     * TYP OGŁOSZENIA
+     */
+    if (type != null) {
+
+        specification = specification.and(
+                (root, query, criteriaBuilder) ->
+                        criteriaBuilder.equal(
+                                root.get("type"),
+                                type
+                        )
+        );
+    }
+
+    /*
+     * CENA MINIMALNA
+     */
+    if (minPrice != null) {
+
+        specification = specification.and(
+                (root, query, criteriaBuilder) ->
+                        criteriaBuilder.greaterThanOrEqualTo(
+                                root.get("price"),
+                                minPrice
+                        )
+        );
+    }
+
+    /*
+     * CENA MAKSYMALNA
+     */
+    if (maxPrice != null) {
+
+        specification = specification.and(
+                (root, query, criteriaBuilder) ->
+                        criteriaBuilder.lessThanOrEqualTo(
+                                root.get("price"),
+                                maxPrice
+                        )
+        );
+    }
+
+    /*
+     * POBIERAMY TYLKO AKTYWNE OGŁOSZENIA
+     * I SORTUJEMY OD NAJNOWSZYCH.
+     */
+    List<Offer> offers = offerRepository.findAll(
+            specification,
+            Sort.by(
+                    Sort.Direction.DESC,
+                    "createdAt"
+            )
+    );
+
+    return offers.stream()
+            .map(OfferResponse::from)
+            .toList();
+}
+
+    private String normalizeSearch(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
         }
 
-        return offers.stream()
-                .map(OfferResponse::from)
-                .toList();
+        return value.trim();
     }
 
     public OfferResponse updateOffer(

@@ -4,14 +4,20 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface OfferRepository extends JpaRepository<Offer, Long> {
+public interface OfferRepository
+        extends JpaRepository<Offer, Long>, JpaSpecificationExecutor<Offer> {
 
     List<Offer> findAllByOrderByCreatedAtDesc();
 
-    List<Offer> findByStatusOrderByCreatedAtDesc(OfferStatus status);
+    List<Offer> findByStatusOrderByCreatedAtDesc(
+            OfferStatus status
+    );
 
-    List<Offer> findByUserIdOrderByCreatedAtDesc(Long userId);
+    List<Offer> findByUserIdOrderByCreatedAtDesc(
+            Long userId
+    );
 
     List<Offer> findByStatusAndTitleContainingIgnoreCaseOrStatusAndDescriptionContainingIgnoreCaseOrderByCreatedAtDesc(
             OfferStatus status1,
@@ -46,5 +52,7 @@ public interface OfferRepository extends JpaRepository<Offer, Long> {
             BigDecimal maxPrice
     );
 
-    long countByStatus(OfferStatus status);
+    long countByStatus(
+            OfferStatus status
+    );
 }

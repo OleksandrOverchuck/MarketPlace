@@ -140,14 +140,6 @@
                 <div class="notification-panel" id="notification-panel">
                   <div class="notification-panel-header">
                     <span>Powiadomienia</span>
-
-                    <button
-                      type="button"
-                      class="notification-mark-all-button"
-                      id="mark-all-notifications-read"
-                    >
-                      Zaznacz jako przeczytane
-                    </button>
                   </div>
 
                   <div class="notification-list" id="notification-list">
@@ -281,25 +273,28 @@
 
     <section id="search" class="search-section">
       <div class="container">
-        <div class="search-box">
-          <input type="text" placeholder="Czego szukasz?" />
+        <form class="search-box" id="offer-search-form">
+          <input
+            id="offer-search-input"
+            type="search"
+            placeholder="Czego szukasz?"
+            autocomplete="off"
+          />
 
-          <select>
-            <option>Wszystkie kategorie</option>
+          <input
+            id="offer-location-input"
+            class="search-location-input"
+            type="search"
+            placeholder="Miasto, np. Opole"
+            autocomplete="address-level2"
+          />
 
-            <option>Elektronika</option>
-
-            <option>Motoryzacja</option>
-
-            <option>Nieruchomości</option>
-
-            <option>Moda</option>
-
-            <option>Praca</option>
+          <select id="offer-category-select">
+            <option value="">Wszystkie kategorie</option>
           </select>
 
-          <button>Szukaj</button>
-        </div>
+          <button type="submit" id="offer-search-button">Szukaj</button>
+        </form>
       </div>
     </section>
 
@@ -315,36 +310,36 @@
           <span class="section-sub"> Wybierz dział, który Cię interesuje </span>
         </div>
 
-        <div class="category-grid">
-          <div class="category-card">
+        <div class="category-grid" id="category-grid">
+          <button class="category-card" type="button" data-category-name="Elektronika">
             <span class="icon">📱</span>
-            Elektronika
-          </div>
+            <span>Elektronika</span>
+          </button>
 
-          <div class="category-card">
+          <button class="category-card" type="button" data-category-name="Motoryzacja">
             <span class="icon">🚗</span>
-            Motoryzacja
-          </div>
+            <span>Motoryzacja</span>
+          </button>
 
-          <div class="category-card">
-            <span class="icon">🏠</span>
-            Nieruchomości
-          </div>
-
-          <div class="category-card">
+          <button class="category-card" type="button" data-category-name="Dom i ogród">
             <span class="icon">🛋</span>
-            Dom i ogród
-          </div>
+            <span>Dom i ogród</span>
+          </button>
 
-          <div class="category-card">
+          <button class="category-card" type="button" data-category-name="Moda">
             <span class="icon">👗</span>
-            Moda
-          </div>
+            <span>Moda</span>
+          </button>
 
-          <div class="category-card">
+          <button class="category-card" type="button" data-category-name="Praca">
             <span class="icon">💼</span>
-            Praca
-          </div>
+            <span>Praca</span>
+          </button>
+
+          <button class="category-card" type="button" data-category-name="Usługi">
+            <span class="icon">🛠️</span>
+            <span>Usługi</span>
+          </button>
         </div>
       </div>
     </section>
