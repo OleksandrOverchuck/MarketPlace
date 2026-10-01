@@ -23,6 +23,9 @@ public class Conversation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "offer_id")
+    private Long offerId;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -58,6 +61,14 @@ public class Conversation {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getOfferId() {
+    return offerId;
+    }
+
+    public void setOfferId(Long offerId) {
+        this.offerId = offerId;
     }
 
     public LocalDateTime getCreatedAt() {

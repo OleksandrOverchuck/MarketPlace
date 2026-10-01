@@ -10,6 +10,8 @@ public record ConversationResponse(
 
         Long id,
 
+        Long offerId,
+
         LocalDateTime createdAt,
 
         LocalDateTime updatedAt,
@@ -21,6 +23,7 @@ public record ConversationResponse(
     public static ConversationResponse from(
             Conversation conversation
     ) {
+
         List<ParticipantResponse> participants =
                 conversation
                         .getParticipants()
@@ -30,6 +33,7 @@ public record ConversationResponse(
 
         return new ConversationResponse(
                 conversation.getId(),
+                conversation.getOfferId(),
                 conversation.getCreatedAt(),
                 conversation.getUpdatedAt(),
                 participants
@@ -49,6 +53,7 @@ public record ConversationResponse(
         public static ParticipantResponse from(
                 ConversationParticipant participant
         ) {
+
             return new ParticipantResponse(
                     participant.getUser().getId(),
                     participant.getUser().getNickname(),

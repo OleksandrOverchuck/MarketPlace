@@ -28,7 +28,8 @@ public class ConversationService {
 
     public Conversation createConversation(
             String currentEmail,
-            Long otherUserId
+            Long otherUserId,
+            Long offerId
     ) {
         User currentUser = userRepository.findByEmail(currentEmail)
                 .orElseThrow(() ->
@@ -50,19 +51,17 @@ public class ConversationService {
             );
         }
 
-        /*
-         * Najpierw sprawdzamy, czy rozmowa między tymi
-         * dwoma użytkownikami już istnieje.
-         */
         return conversationRepository
-                .findConversationBetweenUsers(
+                .findConversationBetweenUsersAndOffer(
                         currentUser.getId(),
-                        otherUser.getId()
+                        otherUser.getId(),
+                        offerId
                 )
                 .orElseGet(() -> {
 
                     Conversation conversation =
                             new Conversation();
+                            conversation.setOfferId(offerId);
 
                     Conversation savedConversation =
                             conversationRepository.save(conversation);

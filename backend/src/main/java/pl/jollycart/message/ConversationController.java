@@ -38,7 +38,8 @@ public class ConversationController {
         Conversation conversation =
                 conversationService.createConversation(
                         currentEmail,
-                        request.otherUserId()
+                        request.otherUserId(),
+                         request.offerId()
                 );
 
         return ResponseEntity
@@ -81,10 +82,11 @@ public class ConversationController {
     }
 
     public record CreateConversationRequest(
+        @NotNull(message = "ID użytkownika jest wymagane")
+        Long otherUserId,
 
-            @NotNull(message = "ID użytkownika jest wymagane")
-            Long otherUserId
-
+        @NotNull(message = "ID ogłoszenia jest wymagane")
+        Long offerId
     ) {
-    }
+   }
 }

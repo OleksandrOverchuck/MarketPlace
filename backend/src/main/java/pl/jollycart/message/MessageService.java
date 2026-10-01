@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import pl.jollycart.message.dto.CreateMessageRequest;
 import pl.jollycart.message.dto.MessageResponse;
+import pl.jollycart.notification.NotificationService;
 import pl.jollycart.user.User;
 import pl.jollycart.user.UserRepository;
 
@@ -18,17 +19,20 @@ public class MessageService {
     private final ConversationRepository conversationRepository;
     private final ConversationParticipantRepository participantRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public MessageService(
             MessageRepository messageRepository,
             ConversationRepository conversationRepository,
             ConversationParticipantRepository participantRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            NotificationService notificationService
     ) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     public MessageResponse createMessage(
@@ -36,6 +40,7 @@ public class MessageService {
             String currentEmail,
             CreateMessageRequest request
     ) {
+
         User currentUser =
                 userRepository.findByEmail(currentEmail)
                         .orElseThrow(() ->
@@ -74,6 +79,15 @@ public class MessageService {
         Message savedMessage =
                 messageRepository.save(message);
 
+        /*
+         * NOWE:
+         * po zapisaniu wiadomości tworzymy
+         * powiadomienie dla drugiego uczestnika.
+         */
+        notificationService.createMessageNotifications(
+                savedMessage
+        );
+
         return MessageResponse.from(savedMessage);
     }
 
@@ -82,6 +96,7 @@ public class MessageService {
             Long conversationId,
             String currentEmail
     ) {
+
         User currentUser =
                 userRepository.findByEmail(currentEmail)
                         .orElseThrow(() ->
@@ -101,9 +116,7 @@ public class MessageService {
             );
         }
 
-        if (!conversationRepository.existsById(
-                conversationId
-        )) {
+        if (!conversationRepository.existsById(conversationId)) {
             throw new IllegalArgumentException(
                     "Rozmowa nie została znaleziona"
             );

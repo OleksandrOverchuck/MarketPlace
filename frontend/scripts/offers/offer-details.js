@@ -32,9 +32,7 @@ async function loadOfferDetails() {
 
     if (!response.ok) {
       throw new Error(
-        offer?.message ||
-          offer?.error ||
-          "Nie udało się pobrać ogłoszenia.",
+        offer?.message || offer?.error || "Nie udało się pobrać ogłoszenia.",
       );
     }
 
@@ -46,24 +44,15 @@ async function loadOfferDetails() {
       },
     );
 
-    const images = imagesResponse.ok
-      ? await imagesResponse.json()
-      : [];
+    const images = imagesResponse.ok ? await imagesResponse.json() : [];
 
-    renderOfferDetails(
-      root,
-      offer,
-      Array.isArray(images) ? images : [],
-    );
+    renderOfferDetails(root, offer, Array.isArray(images) ? images : []);
 
     // Przycisk wiadomości musi być podpięty dopiero
     // po wyrenderowaniu HTML-a ogłoszenia.
     await setupMessageButton(offer);
   } catch (error) {
-    console.error(
-      "Błąd pobierania szczegółów ogłoszenia:",
-      error,
-    );
+    console.error("Błąd pobierania szczegółów ogłoszenia:", error);
 
     root.innerHTML = `
       <div class="offer-details-error">
@@ -113,15 +102,11 @@ function renderOfferDetails(root, offer, images) {
       <div class="offer-details-content">
         <div class="offer-details-topline">
           <span class="offer-details-category">
-            ${escapeDetailsHtml(
-              offer.categoryName || "Bez kategorii",
-            )}
+            ${escapeDetailsHtml(offer.categoryName || "Bez kategorii")}
           </span>
 
           <span class="offer-details-type">
-            ${escapeDetailsHtml(
-              getDetailsTypeLabel(offer.type),
-            )}
+            ${escapeDetailsHtml(getDetailsTypeLabel(offer.type))}
           </span>
         </div>
 
@@ -144,27 +129,21 @@ function renderOfferDetails(root, offer, images) {
           <div>
             <span>Lokalizacja</span>
             <strong>
-              ${escapeDetailsHtml(
-                offer.location || "Nie podano",
-              )}
+              ${escapeDetailsHtml(offer.location || "Nie podano")}
             </strong>
           </div>
 
           <div>
             <span>Sprzedający</span>
             <strong>
-              ${escapeDetailsHtml(
-                offer.nickname || "Użytkownik",
-              )}
+              ${escapeDetailsHtml(offer.nickname || "Użytkownik")}
             </strong>
           </div>
 
           <div>
             <span>Dodano</span>
             <strong>
-              ${escapeDetailsHtml(
-                formatDetailsDate(offer.createdAt),
-              )}
+              ${escapeDetailsHtml(formatDetailsDate(offer.createdAt))}
             </strong>
           </div>
         </div>
@@ -173,9 +152,7 @@ function renderOfferDetails(root, offer, images) {
           <h2>Opis</h2>
 
           <p>
-            ${escapeDetailsHtml(
-              offer.description || "Brak opisu.",
-            )}
+            ${escapeDetailsHtml(offer.description || "Brak opisu.")}
           </p>
         </section>
       </div>
@@ -184,22 +161,17 @@ function renderOfferDetails(root, offer, images) {
 }
 
 async function setupMessageButton(offer) {
-  const button = document.getElementById(
-    "send-message-button",
-  );
+  const button = document.getElementById("send-message-button");
 
   if (!button || !offer) {
     return;
   }
 
   try {
-    const response = await fetch(
-      `${OFFER_DETAILS_API_BASE_URL}/api/users/me`,
-      {
-        method: "GET",
-        credentials: "include",
-      },
-    );
+    const response = await fetch(`${OFFER_DETAILS_API_BASE_URL}/api/users/me`, {
+      method: "GET",
+      credentials: "include",
+    });
 
     // Niezalogowany użytkownik nie dostaje przycisku.
     if (!response.ok) {
@@ -209,16 +181,99 @@ async function setupMessageButton(offer) {
 
     const currentUser = await response.json();
 
-    // Nie można wysłać wiadomości do samego siebie.
-    if (
-      !currentUser ||
-      Number(currentUser.id) === Number(offer.userId)
-    ) {
+    if (!currentUser) {
       button.style.display = "none";
       return;
     }
 
+    /*
+     * WŁAŚCICIEL OGŁOSZENIA
+     *
+     * Jeżeli użytkownik ogląda własne ogłoszenie,
+     * pokazujemy "Chat".
+     */
+    if (Number(currentUser.id) === Number(offer.userId)) {
+      button.style.display = "block";
+      button.textContent = "Chat";
+
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        button.textContent = "Otwieranie rozmowy...";
+
+        try {
+          const conversationsResponse = await fetch(
+            `${OFFER_DETAILS_API_BASE_URL}/api/conversations`,
+            {
+              method: "GET",
+              credentials: "include",
+            },
+          );
+
+          if (!conversationsResponse.ok) {
+            throw new Error(
+              `Nie udało się pobrać rozmów. HTTP ${conversationsResponse.status}`,
+            );
+          }
+
+          const conversations = await conversationsResponse.json();
+
+          /*
+           * Szukamy rozmowy powiązanej z konkretnym
+           * ogłoszeniem.
+           */
+          const offerConversations = Array.isArray(conversations)
+            ? conversations.filter(
+                (item) => Number(item.offerId) === Number(offer.id),
+              )
+            : [];
+
+          // Jeżeli właściciel ma kilka rozmów dotyczących tego ogłoszenia,
+          // otwieramy tę ostatnio aktualizowaną.
+          const conversation = offerConversations
+            .slice()
+            .sort((first, second) => {
+              const firstDate = new Date(
+                first.updatedAt || first.createdAt || 0,
+              ).getTime();
+
+              const secondDate = new Date(
+                second.updatedAt || second.createdAt || 0,
+              ).getTime();
+
+              return secondDate - firstDate;
+            })[0];
+
+          if (!conversation || !conversation.id) {
+            alert("Nie ma jeszcze żadnej rozmowy dotyczącej tego ogłoszenia.");
+
+            button.disabled = false;
+            button.textContent = "Chat";
+            return;
+          }
+
+          window.location.href =
+            `chat.html?conversationId=${encodeURIComponent(conversation.id)}` +
+            `&offerId=${encodeURIComponent(offer.id)}`;
+        } catch (error) {
+          console.error("Błąd otwierania rozmowy:", error);
+
+          alert(error.message || "Nie udało się otworzyć rozmowy.");
+
+          button.disabled = false;
+          button.textContent = "Chat";
+        }
+      });
+
+      return;
+    }
+
+    /*
+     * CUDZE OGŁOSZENIE
+     *
+     * Pokazujemy "Wyślij wiadomość".
+     */
     button.style.display = "block";
+    button.textContent = "Wyślij wiadomość";
 
     button.addEventListener("click", async () => {
       button.disabled = true;
@@ -235,6 +290,7 @@ async function setupMessageButton(offer) {
             },
             body: JSON.stringify({
               otherUserId: offer.userId,
+              offerId: offer.id,
             }),
           },
         );
@@ -243,8 +299,7 @@ async function setupMessageButton(offer) {
           let errorMessage = `HTTP ${conversationResponse.status}`;
 
           try {
-            const errorData =
-              await conversationResponse.json();
+            const errorData = await conversationResponse.json();
 
             if (errorData.message) {
               errorMessage = errorData.message;
@@ -256,58 +311,51 @@ async function setupMessageButton(offer) {
           throw new Error(errorMessage);
         }
 
-        const conversation =
-          await conversationResponse.json();
+        const conversation = await conversationResponse.json();
 
         if (!conversation || !conversation.id) {
-          throw new Error(
-            "Backend nie zwrócił ID rozmowy.",
-          );
+          throw new Error("Backend nie zwrócił ID rozmowy.");
         }
 
         window.location.href =
-          `chat.html?conversationId=${encodeURIComponent(
-            conversation.id,
-          )}&offerId=${encodeURIComponent(offer.id)}`;
+          `chat.html?conversationId=${encodeURIComponent(conversation.id)}` +
+          `&offerId=${encodeURIComponent(offer.id)}`;
       } catch (error) {
-        console.error(
-          "Błąd otwierania rozmowy:",
-          error,
-        );
+        console.error("Błąd otwierania rozmowy:", error);
 
-        alert(
-          error.message ||
-            "Nie udało się otworzyć rozmowy.",
-        );
+        alert(error.message || "Nie udało się otworzyć rozmowy.");
 
         button.disabled = false;
         button.textContent = "Wyślij wiadomość";
       }
     });
   } catch (error) {
-    console.error(
-      "Błąd sprawdzania zalogowanego użytkownika:",
-      error,
-    );
+    console.error("Błąd sprawdzania zalogowanego użytkownika:", error);
 
     button.style.display = "none";
   }
 }
 
 function getDetailsIcon(type) {
-  return {
-    SALE: "🛍️",
-    SERVICE: "🛠️",
-    JOB: "💼",
-  }[type] || "📦";
+  return (
+    {
+      SALE: "🛍️",
+      SERVICE: "🛠️",
+      JOB: "💼",
+    }[type] || "📦"
+  );
 }
 
 function getDetailsTypeLabel(type) {
-  return {
-    SALE: "Sprzedaż",
-    SERVICE: "Usługa",
-    JOB: "Oferta pracy",
-  }[type] || type || "Ogłoszenie";
+  return (
+    {
+      SALE: "Sprzedaż",
+      SERVICE: "Usługa",
+      JOB: "Oferta pracy",
+    }[type] ||
+    type ||
+    "Ogłoszenie"
+  );
 }
 
 function formatDetailsPrice(value) {
@@ -352,3 +400,11 @@ function escapeDetailsHtml(value) {
 
   return div.innerHTML;
 }
+
+window.addEventListener("pageshow", (event) => {
+  if (!event.persisted) {
+    return;
+  }
+
+  window.location.reload();
+});

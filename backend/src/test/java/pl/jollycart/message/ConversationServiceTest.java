@@ -1,19 +1,22 @@
 package pl.jollycart.message;
 
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import pl.jollycart.user.User;
 import pl.jollycart.user.UserRepository;
-
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ConversationServiceTest {
@@ -56,15 +59,24 @@ class ConversationServiceTest {
         when(userRepository.findById(2L))
                 .thenReturn(Optional.of(second));
         when(conversationRepository.save(any(Conversation.class)))
-                .thenReturn(conversation);
+                .thenAnswer(invocation -> {
+                Conversation savedConversation =
+                        invocation.getArgument(0);
+
+                savedConversation.setId(1L);
+
+                return savedConversation;
+                });
 
         Conversation result =
                 conversationService.createConversation(
                         "first@example.com",
-                        2L
+                        2L,
+                        100L
                 );
 
         assertEquals(1L, result.getId());
+        assertEquals(100L, result.getOfferId());
         verify(conversationRepository).save(any(Conversation.class));
         verify(participantRepository, times(2))
                 .save(any(ConversationParticipant.class));
@@ -86,7 +98,8 @@ class ConversationServiceTest {
                         IllegalArgumentException.class,
                         () -> conversationService.createConversation(
                                 "test@example.com",
-                                1L
+                                1L,
+                                100L
                         )
                 );
 

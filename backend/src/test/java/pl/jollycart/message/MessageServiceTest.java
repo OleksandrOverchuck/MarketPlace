@@ -1,21 +1,25 @@
 package pl.jollycart.message;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import pl.jollycart.message.dto.CreateMessageRequest;
-import pl.jollycart.message.dto.MessageResponse;
-import pl.jollycart.user.User;
-import pl.jollycart.user.UserRepository;
-
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import pl.jollycart.message.dto.CreateMessageRequest;
+import pl.jollycart.message.dto.MessageResponse;
+import pl.jollycart.notification.NotificationService;
+import pl.jollycart.user.User;
+import pl.jollycart.user.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class MessageServiceTest {
@@ -32,6 +36,9 @@ class MessageServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
     private MessageService messageService;
 
     @BeforeEach
@@ -40,12 +47,14 @@ class MessageServiceTest {
                 messageRepository,
                 conversationRepository,
                 participantRepository,
-                userRepository
+                userRepository,
+                notificationService
         );
     }
 
     @Test
     void shouldCreateMessageForParticipant() {
+
         User user = new User();
         user.setId(1L);
         user.setEmail("test@example.com");
@@ -59,10 +68,13 @@ class MessageServiceTest {
 
         when(userRepository.findByEmail("test@example.com"))
                 .thenReturn(Optional.of(user));
+
         when(conversationRepository.findById(10L))
                 .thenReturn(Optional.of(conversation));
+
         when(participantRepository.existsByConversationIdAndUserId(10L, 1L))
                 .thenReturn(true);
+
         when(messageRepository.save(any(Message.class)))
                 .thenAnswer(invocation -> {
                     Message message = invocation.getArgument(0);
@@ -88,6 +100,7 @@ class MessageServiceTest {
 
     @Test
     void shouldRejectMessageFromNonParticipant() {
+
         User user = new User();
         user.setId(3L);
         user.setEmail("third@example.com");
@@ -97,8 +110,10 @@ class MessageServiceTest {
 
         when(userRepository.findByEmail("third@example.com"))
                 .thenReturn(Optional.of(user));
+
         when(conversationRepository.findById(10L))
                 .thenReturn(Optional.of(conversation));
+
         when(participantRepository.existsByConversationIdAndUserId(10L, 3L))
                 .thenReturn(false);
 
@@ -116,11 +131,14 @@ class MessageServiceTest {
                 "Nie masz dostępu do tej rozmowy",
                 exception.getMessage()
         );
-        verify(messageRepository, never()).save(any(Message.class));
+
+        verify(messageRepository, never())
+                .save(any(Message.class));
     }
 
     @Test
     void shouldGetConversationMessagesForParticipant() {
+
         User user = new User();
         user.setId(1L);
         user.setEmail("test@example.com");
@@ -137,10 +155,13 @@ class MessageServiceTest {
 
         when(userRepository.findByEmail("test@example.com"))
                 .thenReturn(Optional.of(user));
+
         when(participantRepository.existsByConversationIdAndUserId(10L, 1L))
                 .thenReturn(true);
+
         when(conversationRepository.existsById(10L))
                 .thenReturn(true);
+
         when(messageRepository.findByConversationIdOrderByCreatedAtAsc(10L))
                 .thenReturn(List.of(message));
 
@@ -151,6 +172,9 @@ class MessageServiceTest {
                 );
 
         assertEquals(1, responses.size());
-        assertEquals("Pierwsza wiadomość", responses.get(0).content());
+        assertEquals(
+                "Pierwsza wiadomość",
+                responses.get(0).content()
+        );
     }
 }

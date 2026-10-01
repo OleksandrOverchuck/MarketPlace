@@ -422,6 +422,8 @@ function displayLoggedUser(user) {
   if (logoutButton) {
     logoutButton.addEventListener("click", handleLogout);
   }
+
+  setupNotifications();
 }
 
 function displayGuestUser() {
@@ -537,3 +539,369 @@ function showAuthMessage(message, isError) {
 
   messageElement.style.color = isError ? "#c0392b" : "#2f6b3a";
 }
+
+/* =========================
+   POWIADOMIENIA
+   ========================= */
+
+let notificationRefreshInterval = null;
+
+function setupNotifications() {
+  const notificationButton = document.getElementById("notification-button");
+  const notificationPanel = document.getElementById("notification-panel");
+  const notificationList = document.getElementById("notification-list");
+  const notificationBadge = document.getElementById("notification-badge");
+  const markAllNotificationsButton = document.getElementById(
+    "mark-all-notifications-read",
+  );
+
+  if (
+    !notificationButton ||
+    !notificationPanel ||
+    !notificationList ||
+    !notificationBadge ||
+    !markAllNotificationsButton
+  ) {
+    return;
+  }
+
+  markAllNotificationsButton.onclick = markAllNotificationsAsRead;
+
+  loadNotifications();
+
+  if (notificationRefreshInterval) {
+    clearInterval(notificationRefreshInterval);
+  }
+
+  notificationRefreshInterval = setInterval(() => {
+    loadNotifications();
+  }, 5000);
+}
+
+async function loadNotifications() {
+  const notificationList = document.getElementById("notification-list");
+
+  if (!notificationList) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/notifications`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      return;
+    }
+
+    const notifications = await response.json();
+
+    if (!Array.isArray(notifications)) {
+      return;
+    }
+
+    renderNotifications(notifications);
+  } catch (error) {
+    console.error("Błąd pobierania powiadomień:", error);
+  }
+}
+
+function renderNotifications(notifications) {
+  const notificationList = document.getElementById("notification-list");
+  const notificationBadge = document.getElementById("notification-badge");
+
+  if (!notificationList || !notificationBadge) {
+    return;
+  }
+
+  const unreadNotifications = notifications.filter(
+    (notification) => !notification.read,
+  );
+
+  if (unreadNotifications.length > 0) {
+    notificationBadge.textContent = unreadNotifications.length;
+    notificationBadge.style.display = "flex";
+  } else {
+    notificationBadge.textContent = "";
+    notificationBadge.style.display = "none";
+  }
+
+  const markAllNotificationsButton = document.getElementById(
+    "mark-all-notifications-read",
+  );
+
+  if (markAllNotificationsButton) {
+    markAllNotificationsButton.disabled = unreadNotifications.length === 0;
+  }
+
+  if (unreadNotifications.length === 0) {
+    notificationList.innerHTML = `
+      <div class="notification-empty">
+        Brak nowych powiadomień
+      </div>
+    `;
+
+    return;
+  }
+
+  notificationList.innerHTML = "";
+
+  unreadNotifications.forEach((notification) => {
+    const item = document.createElement("div");
+
+    item.className = "notification-item";
+    item.dataset.notificationId = String(notification.id ?? "");
+
+    if (!notification.read) {
+      item.classList.add("unread");
+    }
+
+    const senderName = escapeHtml(notification.senderNickname || "Użytkownik");
+
+    const content = escapeHtml(notification.content || "");
+
+    const avatarSrc = getAvatarSrc(notification.senderAvatarUrl);
+
+    const senderInitial = escapeHtml(
+      (notification.senderNickname || "Użytkownik")
+        .trim()
+        .charAt(0)
+        .toUpperCase() || "U",
+    );
+
+    const avatarHtml = avatarSrc
+      ? `
+          <img
+            src="${escapeHtml(avatarSrc)}"
+            alt="Zdjęcie profilowe"
+            class="notification-avatar-image"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+          />
+          <span class="notification-avatar-fallback" style="display:none;">${senderInitial}</span>
+        `
+      : `
+          <span class="notification-avatar-fallback">${senderInitial}</span>
+        `;
+
+    const unreadDot = !notification.read
+      ? `<span class="notification-item-unread-dot" aria-hidden="true"></span>`
+      : "";
+
+    item.innerHTML = `
+      <div class="notification-item-icon">
+        ${avatarHtml}
+        ${unreadDot}
+      </div>
+
+      <div class="notification-item-content">
+        <div class="notification-item-title">
+          ${senderName} wysłał wiadomość
+        </div>
+
+        <div class="notification-item-text">
+          ${content}
+        </div>
+
+        <div class="notification-item-time">
+          ${formatNotificationDate(notification.createdAt)}
+        </div>
+      </div>
+    `;
+
+    item.addEventListener("click", () => {
+      openNotification(notification);
+    });
+
+    notificationList.appendChild(item);
+  });
+}
+
+async function openNotification(notification) {
+  if (!notification || !notification.conversationId) {
+    return;
+  }
+
+  try {
+    if (!notification.read && notification.id) {
+      const readResponse = await fetch(
+        `${API_BASE_URL}/api/notifications/${encodeURIComponent(
+          notification.id,
+        )}/read`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        },
+      );
+
+      if (!readResponse.ok) {
+        console.error(
+          "Nie udało się oznaczyć powiadomienia jako przeczytanego.",
+          readResponse.status,
+        );
+        return;
+      }
+    }
+
+    // Usuwamy je z panelu dopiero po poprawnym zapisaniu statusu.
+    removeNotificationFromPanel(notification.id);
+  } catch (error) {
+    console.error("Błąd oznaczania powiadomienia jako przeczytane:", error);
+    return;
+  }
+
+  let offerId = null;
+
+  try {
+    const conversationResponse = await fetch(
+      `${API_BASE_URL}/api/conversations/${encodeURIComponent(
+        notification.conversationId,
+      )}`,
+      {
+        method: "GET",
+        credentials: "include",
+      },
+    );
+
+    if (conversationResponse.ok) {
+      const conversation = await conversationResponse.json();
+      offerId = conversation?.offerId ?? null;
+    }
+  } catch (error) {
+    console.error("Błąd pobierania danych rozmowy:", error);
+  }
+
+  let chatUrl = `chat.html?conversationId=${encodeURIComponent(notification.conversationId)}`;
+
+  if (offerId) {
+    chatUrl += `&offerId=${encodeURIComponent(offerId)}`;
+  }
+
+  window.location.href = chatUrl;
+}
+
+function removeNotificationFromPanel(notificationId) {
+  if (!notificationId) {
+    return;
+  }
+
+  const notificationList = document.getElementById("notification-list");
+  if (!notificationList) {
+    return;
+  }
+
+  const items = notificationList.querySelectorAll(".notification-item");
+
+  items.forEach((item) => {
+    if (item.dataset.notificationId === String(notificationId)) {
+      item.remove();
+    }
+  });
+
+  const remainingItems =
+    notificationList.querySelectorAll(".notification-item");
+
+  if (remainingItems.length === 0) {
+    notificationList.innerHTML = `
+      <div class="notification-empty">
+        Brak nowych powiadomień
+      </div>
+    `;
+  }
+
+  updateNotificationBadgeFromPanel();
+}
+
+function updateNotificationBadgeFromPanel() {
+  const notificationList = document.getElementById("notification-list");
+  const notificationBadge = document.getElementById("notification-badge");
+  const markAllNotificationsButton = document.getElementById(
+    "mark-all-notifications-read",
+  );
+
+  if (!notificationList || !notificationBadge) {
+    return;
+  }
+
+  const count = notificationList.querySelectorAll(".notification-item").length;
+
+  if (count > 0) {
+    notificationBadge.textContent = count;
+    notificationBadge.style.display = "flex";
+  } else {
+    notificationBadge.textContent = "";
+    notificationBadge.style.display = "none";
+  }
+
+  if (markAllNotificationsButton) {
+    markAllNotificationsButton.disabled = count === 0;
+  }
+}
+
+async function markAllNotificationsAsRead() {
+  const button = document.getElementById("mark-all-notifications-read");
+  const notificationList = document.getElementById("notification-list");
+
+  if (!button || !notificationList || button.disabled) {
+    return;
+  }
+
+  button.disabled = true;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    notificationList.innerHTML = `
+      <div class="notification-empty">
+        Brak nowych powiadomień
+      </div>
+    `;
+
+    const notificationBadge = document.getElementById("notification-badge");
+    if (notificationBadge) {
+      notificationBadge.textContent = "";
+      notificationBadge.style.display = "none";
+    }
+  } catch (error) {
+    console.error(
+      "Błąd oznaczania wszystkich powiadomień jako przeczytane:",
+      error,
+    );
+
+    button.disabled = false;
+  }
+}
+
+function formatNotificationDate(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+window.addEventListener("beforeunload", () => {
+  if (notificationRefreshInterval) {
+    clearInterval(notificationRefreshInterval);
+    notificationRefreshInterval = null;
+  }
+});
