@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import pl.jollycart.file.FileService;
+import pl.jollycart.file.ImageFileValidator;
 import pl.jollycart.user.dto.UpdateUserRequest;
 import pl.jollycart.user.dto.UserResponse;
 
@@ -28,7 +29,7 @@ import pl.jollycart.user.dto.UserResponse;
 @RequestMapping("/api/users")
 public class UserController {
 
-    private static final long MAX_AVATAR_SIZE = 5 * 1024 * 1024;
+    private final ImageFileValidator imageFileValidator;
 
     private final UserService userService;
     private final FileService fileService;
@@ -37,12 +38,15 @@ public class UserController {
     public UserController(
             UserService userService,
             FileService fileService,
-            UserRepository userRepository
+            UserRepository userRepository,
+            ImageFileValidator imageFileValidator
     ) {
         this.userService = userService;
         this.fileService = fileService;
         this.userRepository = userRepository;
+        this.imageFileValidator = imageFileValidator;
     }
+
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUser(
@@ -70,7 +74,10 @@ public class UserController {
             Authentication authentication,
             @RequestParam("file") MultipartFile file
     ) {
-        validateAvatar(file);
+        imageFileValidator.validate(
+        file,
+        5 * 1024 * 1024
+        );
 
         User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() ->
@@ -130,26 +137,7 @@ public class UserController {
                 .body(resource);
     }
 
-    private void validateAvatar(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Zdjęcie nie może być puste");
-        }
-
-        if (file.getSize() > MAX_AVATAR_SIZE) {
-            throw new IllegalArgumentException(
-                    "Zdjęcie profilowe nie może być większe niż 5 MB"
-            );
-        }
-
-        String contentType = file.getContentType();
-
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException(
-                    "Dozwolone są tylko pliki graficzne"
-            );
-        }
-    }
-
+    
     private void deleteOldLocalAvatar(String avatarUrl) {
         if (avatarUrl == null || !avatarUrl.startsWith("/api/users/avatar/")) {
             return;

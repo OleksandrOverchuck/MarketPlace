@@ -10,9 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   checkAuthentication();
   loadCategories();
 
-  document
-    .getElementById("title")
-    ?.addEventListener("input", updateCounters);
+  document.getElementById("title")?.addEventListener("input", updateCounters);
 
   document
     .getElementById("description")
@@ -25,13 +23,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function checkAuthentication() {
   try {
-    const response = await fetch(
-      `${POST_AD_API_BASE_URL}/api/auth/me`,
-      {
-        method: "GET",
-        credentials: "include",
-      }
-    );
+    const response = await fetch(`${POST_AD_API_BASE_URL}/api/auth/me`, {
+      method: "GET",
+      credentials: "include",
+    });
 
     if (response.status === 401 || response.status === 403) {
       window.location.href = "login.html";
@@ -55,13 +50,10 @@ async function loadCategories() {
   }
 
   try {
-    const response = await fetch(
-      `${POST_AD_API_BASE_URL}/api/categories`,
-      {
-        method: "GET",
-        credentials: "include",
-      }
-    );
+    const response = await fetch(`${POST_AD_API_BASE_URL}/api/categories`, {
+      method: "GET",
+      credentials: "include",
+    });
 
     if (!response.ok) {
       throw new Error("Nie udało się pobrać kategorii.");
@@ -86,7 +78,7 @@ async function loadCategories() {
 
     showPostAdMessage(
       "Nie udało się pobrać kategorii. Odśwież stronę i spróbuj ponownie.",
-      true
+      true,
     );
   }
 }
@@ -101,6 +93,19 @@ async function handleCreateOffer(event) {
   const priceInput = document.getElementById("price").value.trim();
   const location = document.getElementById("location")?.value.trim() || null;
   const imageFile = document.getElementById("image")?.files?.[0] || null;
+  if (imageFile) {
+    const allowedTypes = ["image/png", "image/jpeg"];
+
+    if (!allowedTypes.includes(imageFile.type)) {
+      showPostAdMessage("Dozwolone są tylko zdjęcia PNG i JPG.", true);
+      return;
+    }
+
+    if (imageFile.size > 10 * 1024 * 1024) {
+      showPostAdMessage("Zdjęcie nie może być większe niż 10 MB.", true);
+      return;
+    }
+  }
   const submitButton = document.getElementById("post-ad-submit");
 
   if (!title) {
@@ -130,7 +135,10 @@ async function handleCreateOffer(event) {
     const parsedPrice = Number(normalizedPrice);
 
     if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
-      showPostAdMessage("Cena musi być poprawną liczbą większą lub równą 0.", true);
+      showPostAdMessage(
+        "Cena musi być poprawną liczbą większą lub równą 0.",
+        true,
+      );
       return;
     }
 
@@ -141,24 +149,21 @@ async function handleCreateOffer(event) {
   showPostAdMessage("Dodawanie ogłoszenia...", false);
 
   try {
-    const response = await fetch(
-      `${POST_AD_API_BASE_URL}/api/offers`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          title,
-          description,
-          price,
-          location,
-          type,
-          categoryId: Number(categoryId),
-        }),
-      }
-    );
+    const response = await fetch(`${POST_AD_API_BASE_URL}/api/offers`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        title,
+        description,
+        price,
+        location,
+        type,
+        categoryId: Number(categoryId),
+      }),
+    });
 
     const data = await readJsonResponse(response);
 
@@ -169,9 +174,7 @@ async function handleCreateOffer(event) {
 
     if (!response.ok) {
       throw new Error(
-        data?.message ||
-          data?.error ||
-          "Nie udało się dodać ogłoszenia."
+        data?.message || data?.error || "Nie udało się dodać ogłoszenia.",
       );
     }
 
@@ -185,22 +188,25 @@ async function handleCreateOffer(event) {
           method: "POST",
           credentials: "include",
           body: formData,
-        }
+        },
       );
 
       if (!imageResponse.ok) {
         const imageData = await readJsonResponse(imageResponse);
         showPostAdMessage(
           `Ogłoszenie zostało dodane, ale zdjęcia nie udało się przesłać. ${imageData?.message || imageData?.error || ""}`.trim(),
-          true
+          true,
         );
       } else {
-        showPostAdMessage("Ogłoszenie i zdjęcie zostały dodane. Za chwilę przejdziesz do listy ogłoszeń.", false);
+        showPostAdMessage(
+          "Ogłoszenie i zdjęcie zostały dodane. Za chwilę przejdziesz do listy ogłoszeń.",
+          false,
+        );
       }
     } else {
       showPostAdMessage(
         "Ogłoszenie zostało dodane. Za chwilę przejdziesz do listy ogłoszeń.",
-        false
+        false,
       );
     }
 

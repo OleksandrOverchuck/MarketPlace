@@ -138,9 +138,7 @@
                      ========================= -->
 
                 <div class="notification-panel" id="notification-panel">
-                  <div class="notification-panel-header">
-                    <span>Powiadomienia</span>
-                  </div>
+                  <div class="notification-panel-header"></div>
 
                   <div class="notification-list" id="notification-list">
                     <div class="notification-empty">
@@ -311,17 +309,29 @@
         </div>
 
         <div class="category-grid" id="category-grid">
-          <button class="category-card" type="button" data-category-name="Elektronika">
+          <button
+            class="category-card"
+            type="button"
+            data-category-name="Elektronika"
+          >
             <span class="icon">📱</span>
             <span>Elektronika</span>
           </button>
 
-          <button class="category-card" type="button" data-category-name="Motoryzacja">
+          <button
+            class="category-card"
+            type="button"
+            data-category-name="Motoryzacja"
+          >
             <span class="icon">🚗</span>
             <span>Motoryzacja</span>
           </button>
 
-          <button class="category-card" type="button" data-category-name="Dom i ogród">
+          <button
+            class="category-card"
+            type="button"
+            data-category-name="Dom i ogród"
+          >
             <span class="icon">🛋</span>
             <span>Dom i ogród</span>
           </button>
@@ -331,12 +341,20 @@
             <span>Moda</span>
           </button>
 
-          <button class="category-card" type="button" data-category-name="Praca">
+          <button
+            class="category-card"
+            type="button"
+            data-category-name="Praca"
+          >
             <span class="icon">💼</span>
             <span>Praca</span>
           </button>
 
-          <button class="category-card" type="button" data-category-name="Usługi">
+          <button
+            class="category-card"
+            type="button"
+            data-category-name="Usługi"
+          >
             <span class="icon">🛠️</span>
             <span>Usługi</span>
           </button>
@@ -419,61 +437,5 @@
     <script src="../scripts/auth/auth.js"></script>
 
     <script src="../scripts/offers/index-offers.js"></script>
-
-    <!-- =========================
-         POWIADOMIENIA - JAVASCRIPT
-         ========================= -->
-
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const notificationButton = document.getElementById(
-          "notification-button",
-        );
-
-        const notificationPanel = document.getElementById("notification-panel");
-
-        if (!notificationButton || !notificationPanel) {
-          return;
-        }
-
-        /*
-         * Kliknięcie dzwonka
-         */
-
-        notificationButton.addEventListener("click", function (event) {
-          event.stopPropagation();
-
-          notificationPanel.classList.toggle("open");
-        });
-
-        /*
-         * Kliknięcie wewnątrz okna
-         * nie zamyka go.
-         */
-
-        notificationPanel.addEventListener("click", function (event) {
-          event.stopPropagation();
-        });
-
-        /*
-         * Kliknięcie poza oknem
-         * zamyka powiadomienia.
-         */
-
-        document.addEventListener("click", function () {
-          notificationPanel.classList.remove("open");
-        });
-
-        /*
-         * ESC zamyka okno.
-         */
-
-        document.addEventListener("keydown", function (event) {
-          if (event.key === "Escape") {
-            notificationPanel.classList.remove("open");
-          }
-        });
-      });
-    </script>
   </body>
 </html>

@@ -547,25 +547,361 @@ function showAuthMessage(message, isError) {
 let notificationRefreshInterval = null;
 
 function setupNotifications() {
-  const notificationButton = document.getElementById("notification-button");
-  const notificationPanel = document.getElementById("notification-panel");
-  const notificationList = document.getElementById("notification-list");
-  const notificationBadge = document.getElementById("notification-badge");
-  const markAllNotificationsButton = document.getElementById(
-    "mark-all-notifications-read",
-  );
+  const wrapper = document.querySelector(".notification-nav-item");
+  const button = document.querySelector("#notification-button");
+  const panel = document.querySelector("#notification-panel");
 
-  if (
-    !notificationButton ||
-    !notificationPanel ||
-    !notificationList ||
-    !notificationBadge ||
-    !markAllNotificationsButton
-  ) {
+  if (!wrapper || !button || !panel) {
+    console.warn("Nie znaleziono elementów powiadomień.");
     return;
   }
 
-  markAllNotificationsButton.onclick = markAllNotificationsAsRead;
+  if (button.dataset.notificationsReady === "1") {
+    return;
+  }
+
+  button.dataset.notificationsReady = "1";
+
+  let badge = document.querySelector("#notification-badge");
+
+  if (!badge) {
+    badge = document.createElement("span");
+    badge.className = "notification-badge";
+    badge.id = "notification-badge";
+    button.appendChild(badge);
+  }
+
+  let header = panel.querySelector(".notification-panel-header");
+
+  if (!header) {
+    header = document.createElement("div");
+    header.className = "notification-panel-header";
+    panel.prepend(header);
+  }
+
+  let headerTitle = header.querySelector(".notification-panel-title");
+
+  if (!headerTitle) {
+    headerTitle = document.createElement("span");
+    headerTitle.className = "notification-panel-title";
+    headerTitle.textContent = "Powiadomienia";
+    header.prepend(headerTitle);
+  }
+
+  let markAllButton = header.querySelector(".notification-mark-all");
+
+  if (!markAllButton) {
+    markAllButton = document.createElement("button");
+    markAllButton.type = "button";
+    markAllButton.className = "notification-mark-all";
+    markAllButton.textContent = "Zaznacz jako przeczytane";
+    header.appendChild(markAllButton);
+  }
+
+  let list = panel.querySelector(".notification-list");
+
+  if (!list) {
+    list = document.createElement("div");
+    list.className = "notification-list";
+    panel.appendChild(list);
+  }
+
+  async function loadNotifications() {
+    try {
+      const [notificationsResponse, unreadResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/notifications`, {
+          method: "GET",
+          credentials: "include",
+        }),
+
+        fetch(`${API_BASE_URL}/api/notifications/unread-count`, {
+          method: "GET",
+          credentials: "include",
+        }),
+      ]);
+
+      if (
+        notificationsResponse.status === 401 ||
+        notificationsResponse.status === 403 ||
+        unreadResponse.status === 401 ||
+        unreadResponse.status === 403
+      ) {
+        return;
+      }
+
+      if (!notificationsResponse.ok || !unreadResponse.ok) {
+        throw new Error(
+          `HTTP ${notificationsResponse.status} / ${unreadResponse.status}`,
+        );
+      }
+
+      const notifications = await notificationsResponse.json();
+      const unreadCount = Number(await unreadResponse.json()) || 0;
+
+      updateNotificationBadge(unreadCount);
+
+      renderNotifications(notifications);
+    } catch (error) {
+      console.error("Błąd pobierania powiadomień:", error);
+
+      list.innerHTML = `
+        <div class="notification-empty">
+          Nie udało się pobrać powiadomień.
+        </div>
+      `;
+    }
+  }
+
+  function updateNotificationBadge(unreadCount) {
+    const count = Number(unreadCount) || 0;
+
+    if (count > 0) {
+      badge.textContent = count > 99 ? "99+" : String(count);
+      badge.style.display = "flex";
+    } else {
+      badge.textContent = "";
+      badge.style.display = "none";
+    }
+
+    markAllButton.disabled = count === 0;
+  }
+
+  function renderNotifications(notifications) {
+    if (!Array.isArray(notifications)) {
+      list.innerHTML = `
+        <div class="notification-empty">
+          Brak nowych powiadomień
+        </div>
+      `;
+
+      updateNotificationBadge(0);
+      return;
+    }
+
+    const unreadNotifications = notifications.filter(
+      (notification) => !notification.read,
+    );
+
+    if (unreadNotifications.length === 0) {
+      list.innerHTML = `
+        <div class="notification-empty">
+          Brak nowych powiadomień
+        </div>
+      `;
+
+      updateNotificationBadge(0);
+      return;
+    }
+
+    list.innerHTML = "";
+
+    unreadNotifications.forEach((notification) => {
+      const item = document.createElement("div");
+
+      item.className = "notification-item";
+      item.dataset.notificationId = String(notification.id ?? "");
+      item.dataset.conversationId = String(notification.conversationId ?? "");
+
+      const senderName = escapeHtml(
+        notification.senderNickname || "Użytkownik",
+      );
+
+      const content = escapeHtml(notification.content || "");
+
+      const avatarSrc = getAvatarSrc(notification.senderAvatarUrl);
+
+      const senderInitial = escapeHtml(
+        (notification.senderNickname || "Użytkownik")
+          .trim()
+          .charAt(0)
+          .toUpperCase() || "U",
+      );
+
+      const avatarHtml = avatarSrc
+        ? `
+          <img
+            src="${escapeHtml(avatarSrc)}"
+            alt="Zdjęcie profilowe"
+            class="notification-avatar-image"
+            onerror="
+              this.style.display='none';
+              this.nextElementSibling.style.display='flex';
+            "
+          />
+          <span
+            class="notification-avatar-fallback"
+            style="display:none;"
+          >
+            ${senderInitial}
+          </span>
+        `
+        : `
+          <span class="notification-avatar-fallback">
+            ${senderInitial}
+          </span>
+        `;
+
+      item.innerHTML = `
+        <div class="notification-item-icon">
+          ${avatarHtml}
+
+          <span
+            class="notification-item-unread-dot"
+            aria-hidden="true"
+          ></span>
+        </div>
+
+        <div class="notification-item-content">
+          <div class="notification-item-title">
+            ${senderName} wysłał wiadomość
+          </div>
+
+          <div class="notification-item-text">
+            ${content}
+          </div>
+
+          <div class="notification-item-time">
+            ${formatNotificationDate(notification.createdAt)}
+          </div>
+        </div>
+      `;
+
+      item.addEventListener("click", () => {
+        openNotification(notification);
+      });
+
+      list.appendChild(item);
+    });
+
+    updateNotificationBadge(unreadNotifications.length);
+  }
+
+  async function openNotification(notification) {
+    if (!notification || !notification.conversationId) {
+      return;
+    }
+
+    try {
+      if (!notification.read && notification.id) {
+        const response = await fetch(
+          `${API_BASE_URL}/api/notifications/${encodeURIComponent(
+            notification.id,
+          )}/read`,
+          {
+            method: "PATCH",
+            credentials: "include",
+          },
+        );
+
+        if (!response.ok) {
+          console.error(
+            "Nie udało się oznaczyć powiadomienia jako przeczytanego.",
+            response.status,
+          );
+
+          return;
+        }
+      }
+
+      let offerId = null;
+
+      try {
+        const conversationResponse = await fetch(
+          `${API_BASE_URL}/api/conversations/${encodeURIComponent(
+            notification.conversationId,
+          )}`,
+          {
+            method: "GET",
+            credentials: "include",
+          },
+        );
+
+        if (conversationResponse.ok) {
+          const conversation = await conversationResponse.json();
+          offerId = conversation?.offerId ?? null;
+        }
+      } catch (error) {
+        console.error("Błąd pobierania danych rozmowy:", error);
+      }
+
+      let chatUrl = `chat.html?conversationId=${encodeURIComponent(
+        notification.conversationId,
+      )}`;
+
+      if (offerId) {
+        chatUrl += `&offerId=${encodeURIComponent(offerId)}`;
+      }
+
+      window.location.href = chatUrl;
+    } catch (error) {
+      console.error("Błąd otwierania powiadomienia:", error);
+    }
+  }
+
+  async function markAllNotificationsAsRead() {
+    markAllButton.disabled = true;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/notifications/read-all`,
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      list.innerHTML = `
+        <div class="notification-empty">
+          Brak nowych powiadomień
+        </div>
+      `;
+
+      updateNotificationBadge(0);
+    } catch (error) {
+      console.error(
+        "Błąd oznaczania wszystkich powiadomień jako przeczytane:",
+        error,
+      );
+
+      markAllButton.disabled = false;
+
+      await loadNotifications();
+    }
+  }
+
+  button.addEventListener("click", async (event) => {
+    event.stopPropagation();
+
+    panel.classList.toggle("open");
+
+    if (panel.classList.contains("open")) {
+      await loadNotifications();
+    }
+  });
+
+  panel.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
+
+  markAllButton.addEventListener("click", async (event) => {
+    event.stopPropagation();
+
+    await markAllNotificationsAsRead();
+  });
+
+  document.addEventListener("click", () => {
+    panel.classList.remove("open");
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      panel.classList.remove("open");
+    }
+  });
 
   loadNotifications();
 
@@ -573,310 +909,7 @@ function setupNotifications() {
     clearInterval(notificationRefreshInterval);
   }
 
-  notificationRefreshInterval = setInterval(() => {
-    loadNotifications();
-  }, 5000);
-}
-
-async function loadNotifications() {
-  const notificationList = document.getElementById("notification-list");
-
-  if (!notificationList) {
-    return;
-  }
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/notifications`, {
-      method: "GET",
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      return;
-    }
-
-    const notifications = await response.json();
-
-    if (!Array.isArray(notifications)) {
-      return;
-    }
-
-    renderNotifications(notifications);
-  } catch (error) {
-    console.error("Błąd pobierania powiadomień:", error);
-  }
-}
-
-function renderNotifications(notifications) {
-  const notificationList = document.getElementById("notification-list");
-  const notificationBadge = document.getElementById("notification-badge");
-
-  if (!notificationList || !notificationBadge) {
-    return;
-  }
-
-  const unreadNotifications = notifications.filter(
-    (notification) => !notification.read,
-  );
-
-  if (unreadNotifications.length > 0) {
-    notificationBadge.textContent = unreadNotifications.length;
-    notificationBadge.style.display = "flex";
-  } else {
-    notificationBadge.textContent = "";
-    notificationBadge.style.display = "none";
-  }
-
-  const markAllNotificationsButton = document.getElementById(
-    "mark-all-notifications-read",
-  );
-
-  if (markAllNotificationsButton) {
-    markAllNotificationsButton.disabled = unreadNotifications.length === 0;
-  }
-
-  if (unreadNotifications.length === 0) {
-    notificationList.innerHTML = `
-      <div class="notification-empty">
-        Brak nowych powiadomień
-      </div>
-    `;
-
-    return;
-  }
-
-  notificationList.innerHTML = "";
-
-  unreadNotifications.forEach((notification) => {
-    const item = document.createElement("div");
-
-    item.className = "notification-item";
-    item.dataset.notificationId = String(notification.id ?? "");
-
-    if (!notification.read) {
-      item.classList.add("unread");
-    }
-
-    const senderName = escapeHtml(notification.senderNickname || "Użytkownik");
-
-    const content = escapeHtml(notification.content || "");
-
-    const avatarSrc = getAvatarSrc(notification.senderAvatarUrl);
-
-    const senderInitial = escapeHtml(
-      (notification.senderNickname || "Użytkownik")
-        .trim()
-        .charAt(0)
-        .toUpperCase() || "U",
-    );
-
-    const avatarHtml = avatarSrc
-      ? `
-          <img
-            src="${escapeHtml(avatarSrc)}"
-            alt="Zdjęcie profilowe"
-            class="notification-avatar-image"
-            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-          />
-          <span class="notification-avatar-fallback" style="display:none;">${senderInitial}</span>
-        `
-      : `
-          <span class="notification-avatar-fallback">${senderInitial}</span>
-        `;
-
-    const unreadDot = !notification.read
-      ? `<span class="notification-item-unread-dot" aria-hidden="true"></span>`
-      : "";
-
-    item.innerHTML = `
-      <div class="notification-item-icon">
-        ${avatarHtml}
-        ${unreadDot}
-      </div>
-
-      <div class="notification-item-content">
-        <div class="notification-item-title">
-          ${senderName} wysłał wiadomość
-        </div>
-
-        <div class="notification-item-text">
-          ${content}
-        </div>
-
-        <div class="notification-item-time">
-          ${formatNotificationDate(notification.createdAt)}
-        </div>
-      </div>
-    `;
-
-    item.addEventListener("click", () => {
-      openNotification(notification);
-    });
-
-    notificationList.appendChild(item);
-  });
-}
-
-async function openNotification(notification) {
-  if (!notification || !notification.conversationId) {
-    return;
-  }
-
-  try {
-    if (!notification.read && notification.id) {
-      const readResponse = await fetch(
-        `${API_BASE_URL}/api/notifications/${encodeURIComponent(
-          notification.id,
-        )}/read`,
-        {
-          method: "PATCH",
-          credentials: "include",
-        },
-      );
-
-      if (!readResponse.ok) {
-        console.error(
-          "Nie udało się oznaczyć powiadomienia jako przeczytanego.",
-          readResponse.status,
-        );
-        return;
-      }
-    }
-
-    // Usuwamy je z panelu dopiero po poprawnym zapisaniu statusu.
-    removeNotificationFromPanel(notification.id);
-  } catch (error) {
-    console.error("Błąd oznaczania powiadomienia jako przeczytane:", error);
-    return;
-  }
-
-  let offerId = null;
-
-  try {
-    const conversationResponse = await fetch(
-      `${API_BASE_URL}/api/conversations/${encodeURIComponent(
-        notification.conversationId,
-      )}`,
-      {
-        method: "GET",
-        credentials: "include",
-      },
-    );
-
-    if (conversationResponse.ok) {
-      const conversation = await conversationResponse.json();
-      offerId = conversation?.offerId ?? null;
-    }
-  } catch (error) {
-    console.error("Błąd pobierania danych rozmowy:", error);
-  }
-
-  let chatUrl = `chat.html?conversationId=${encodeURIComponent(notification.conversationId)}`;
-
-  if (offerId) {
-    chatUrl += `&offerId=${encodeURIComponent(offerId)}`;
-  }
-
-  window.location.href = chatUrl;
-}
-
-function removeNotificationFromPanel(notificationId) {
-  if (!notificationId) {
-    return;
-  }
-
-  const notificationList = document.getElementById("notification-list");
-  if (!notificationList) {
-    return;
-  }
-
-  const items = notificationList.querySelectorAll(".notification-item");
-
-  items.forEach((item) => {
-    if (item.dataset.notificationId === String(notificationId)) {
-      item.remove();
-    }
-  });
-
-  const remainingItems =
-    notificationList.querySelectorAll(".notification-item");
-
-  if (remainingItems.length === 0) {
-    notificationList.innerHTML = `
-      <div class="notification-empty">
-        Brak nowych powiadomień
-      </div>
-    `;
-  }
-
-  updateNotificationBadgeFromPanel();
-}
-
-function updateNotificationBadgeFromPanel() {
-  const notificationList = document.getElementById("notification-list");
-  const notificationBadge = document.getElementById("notification-badge");
-  const markAllNotificationsButton = document.getElementById(
-    "mark-all-notifications-read",
-  );
-
-  if (!notificationList || !notificationBadge) {
-    return;
-  }
-
-  const count = notificationList.querySelectorAll(".notification-item").length;
-
-  if (count > 0) {
-    notificationBadge.textContent = count;
-    notificationBadge.style.display = "flex";
-  } else {
-    notificationBadge.textContent = "";
-    notificationBadge.style.display = "none";
-  }
-
-  if (markAllNotificationsButton) {
-    markAllNotificationsButton.disabled = count === 0;
-  }
-}
-
-async function markAllNotificationsAsRead() {
-  const button = document.getElementById("mark-all-notifications-read");
-  const notificationList = document.getElementById("notification-list");
-
-  if (!button || !notificationList || button.disabled) {
-    return;
-  }
-
-  button.disabled = true;
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
-      method: "POST",
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    notificationList.innerHTML = `
-      <div class="notification-empty">
-        Brak nowych powiadomień
-      </div>
-    `;
-
-    const notificationBadge = document.getElementById("notification-badge");
-    if (notificationBadge) {
-      notificationBadge.textContent = "";
-      notificationBadge.style.display = "none";
-    }
-  } catch (error) {
-    console.error(
-      "Błąd oznaczania wszystkich powiadomień jako przeczytane:",
-      error,
-    );
-
-    button.disabled = false;
-  }
+  notificationRefreshInterval = window.setInterval(loadNotifications, 10000);
 }
 
 function formatNotificationDate(value) {

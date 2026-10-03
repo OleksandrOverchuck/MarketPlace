@@ -1,23 +1,28 @@
 package pl.jollycart.image;
 
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import org.mockito.Mock;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+
 import pl.jollycart.file.FileService;
+import pl.jollycart.file.ImageFileValidator;
 import pl.jollycart.image.dto.OfferImageResponse;
 import pl.jollycart.offer.Offer;
 import pl.jollycart.offer.OfferRepository;
 import pl.jollycart.user.User;
-
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OfferImageServiceTest {
@@ -31,6 +36,9 @@ class OfferImageServiceTest {
     @Mock
     private FileService fileService;
 
+    @Mock
+    private ImageFileValidator imageFileValidator;
+
     private OfferImageService offerImageService;
 
     @BeforeEach
@@ -38,12 +46,14 @@ class OfferImageServiceTest {
         offerImageService = new OfferImageService(
                 offerImageRepository,
                 offerRepository,
-                fileService
+                fileService,
+                imageFileValidator
         );
     }
 
     @Test
     void shouldUploadImageToOwnOffer() {
+
         User owner = new User();
         owner.setId(1L);
         owner.setEmail("owner@example.com");
@@ -52,22 +62,22 @@ class OfferImageServiceTest {
         offer.setId(2L);
         offer.setUser(owner);
 
-        MockMultipartFile file =
-                new MockMultipartFile(
-                        "file",
-                        "photo.png",
-                        "image/png",
-                        new byte[]{1, 2, 3}
-                );
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "photo.png",
+                "image/png",
+                new byte[]{1, 2, 3}
+        );
 
         when(offerRepository.findById(2L))
                 .thenReturn(Optional.of(offer));
+
         when(fileService.storeFile(file))
                 .thenReturn("stored-photo.png");
+
         when(offerImageRepository.save(any(OfferImage.class)))
                 .thenAnswer(invocation -> {
-                    OfferImage image =
-                            invocation.getArgument(0);
+                    OfferImage image = invocation.getArgument(0);
                     image.setId(1L);
                     return image;
                 });
@@ -79,6 +89,9 @@ class OfferImageServiceTest {
                         file
                 );
 
+        verify(imageFileValidator)
+                .validate(file, 10 * 1024 * 1024);
+
         assertEquals(1L, response.id());
         assertEquals("photo.png", response.fileName());
         assertEquals("stored-photo.png", response.storedFileName());
@@ -88,6 +101,7 @@ class OfferImageServiceTest {
 
     @Test
     void shouldRejectImageUploadToAnotherUsersOffer() {
+
         User owner = new User();
         owner.setId(1L);
         owner.setEmail("owner@example.com");
@@ -96,13 +110,12 @@ class OfferImageServiceTest {
         offer.setId(2L);
         offer.setUser(owner);
 
-        MockMultipartFile file =
-                new MockMultipartFile(
-                        "file",
-                        "photo.png",
-                        "image/png",
-                        new byte[]{1}
-                );
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "photo.png",
+                "image/png",
+                new byte[]{1}
+        );
 
         when(offerRepository.findById(2L))
                 .thenReturn(Optional.of(offer));
@@ -121,11 +134,17 @@ class OfferImageServiceTest {
                 "Nie możesz dodać zdjęcia do cudzej oferty",
                 exception.getMessage()
         );
-        verify(fileService, never()).storeFile(any());
+
+        verify(imageFileValidator, never())
+                .validate(any(), anyLong());
+
+        verify(fileService, never())
+                .storeFile(any());
     }
 
     @Test
     void shouldRejectNonImageFile() {
+
         User owner = new User();
         owner.setId(1L);
         owner.setEmail("owner@example.com");
@@ -134,16 +153,21 @@ class OfferImageServiceTest {
         offer.setId(2L);
         offer.setUser(owner);
 
-        MockMultipartFile file =
-                new MockMultipartFile(
-                        "file",
-                        "document.txt",
-                        "text/plain",
-                        new byte[]{1, 2}
-                );
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "document.txt",
+                "text/plain",
+                new byte[]{1, 2}
+        );
 
         when(offerRepository.findById(2L))
                 .thenReturn(Optional.of(offer));
+
+        doThrow(new IllegalArgumentException(
+                "Dozwolone są tylko pliki PNG i JPG"
+        ))
+                .when(imageFileValidator)
+                .validate(file, 10 * 1024 * 1024);
 
         IllegalArgumentException exception =
                 assertThrows(
@@ -156,14 +180,20 @@ class OfferImageServiceTest {
                 );
 
         assertEquals(
-                "Dozwolone są tylko pliki graficzne",
+                "Dozwolone są tylko pliki PNG i JPG",
                 exception.getMessage()
         );
-        verify(fileService, never()).storeFile(any());
+
+        verify(imageFileValidator)
+                .validate(file, 10 * 1024 * 1024);
+
+        verify(fileService, never())
+                .storeFile(any());
     }
 
     @Test
     void shouldDeleteOwnImage() {
+
         User owner = new User();
         owner.setId(1L);
         owner.setEmail("owner@example.com");
@@ -185,7 +215,10 @@ class OfferImageServiceTest {
                 "owner@example.com"
         );
 
-        verify(fileService).deleteFile("stored-photo.png");
-        verify(offerImageRepository).delete(image);
+        verify(fileService)
+                .deleteFile("stored-photo.png");
+
+        verify(offerImageRepository)
+                .delete(image);
     }
 }

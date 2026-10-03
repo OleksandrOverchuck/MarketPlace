@@ -127,14 +127,14 @@ public class OfferService {
     }
 
     @Transactional(readOnly = true)
-public List<OfferResponse> searchOffers(
+    public List<OfferResponse> searchOffers(
         String search,
         String location,
         Long categoryId,
         OfferType type,
         BigDecimal minPrice,
         BigDecimal maxPrice
-) {
+    ) {
 
     Specification<Offer> specification =
             (root, query, criteriaBuilder) ->

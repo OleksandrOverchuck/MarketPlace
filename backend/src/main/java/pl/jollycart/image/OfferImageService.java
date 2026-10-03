@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import pl.jollycart.file.FileService;
+import pl.jollycart.file.ImageFileValidator;
 import pl.jollycart.image.dto.OfferImageResponse;
 import pl.jollycart.offer.Offer;
 import pl.jollycart.offer.OfferRepository;
@@ -18,15 +19,18 @@ public class OfferImageService {
     private final OfferImageRepository offerImageRepository;
     private final OfferRepository offerRepository;
     private final FileService fileService;
+    private final ImageFileValidator imageFileValidator;
 
     public OfferImageService(
             OfferImageRepository offerImageRepository,
             OfferRepository offerRepository,
-            FileService fileService
+            FileService fileService,
+            ImageFileValidator imageFileValidator
     ) {
         this.offerImageRepository = offerImageRepository;
         this.offerRepository = offerRepository;
         this.fileService = fileService;
+        this.imageFileValidator = imageFileValidator;
     }
 
     public OfferImageResponse uploadImage(
@@ -48,7 +52,10 @@ public class OfferImageService {
             );
         }
 
-        validateImage(file);
+        imageFileValidator.validate(
+                file,
+                10 * 1024 * 1024
+        );
 
         String storedFileName = fileService.storeFile(file);
 
@@ -122,28 +129,5 @@ public class OfferImageService {
         offerImageRepository.delete(image);
     }
 
-    private void validateImage(MultipartFile file) {
-
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Plik nie może być pusty"
-            );
-        }
-
-        String contentType = file.getContentType();
-
-        if (contentType == null ||
-                !contentType.startsWith("image/")) {
-
-            throw new IllegalArgumentException(
-                    "Dozwolone są tylko pliki graficzne"
-            );
-        }
-
-        if (file.getSize() > 10 * 1024 * 1024) {
-            throw new IllegalArgumentException(
-                    "Obraz nie może być większy niż 10 MB"
-            );
-        }
-    }
+    
 }

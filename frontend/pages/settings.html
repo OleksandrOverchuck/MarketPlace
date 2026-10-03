@@ -29,15 +29,37 @@
               xmlns="http://www.w3.org/2000/svg"
               aria-hidden="true"
             >
-              <path d="M14 9 Q15 6 18 7" stroke="#2f6b3a" stroke-width="1.6" stroke-linecap="round" fill="none" />
+              <path
+                d="M14 9 Q15 6 18 7"
+                stroke="#2f6b3a"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                fill="none"
+              />
               <circle cx="16" cy="11" r="5.5" fill="#e2574c" />
               <path d="M25 4 L29.5 14 L20.5 14 Z" fill="#e8a33d" />
               <circle cx="32" cy="12" r="5" fill="#5b8c3e" />
-              <path d="M6 14H10L14.5 33H35" stroke="#0e5c53" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M13 19H37.5L34.5 31H16.5" stroke="#0e5c53" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+
+              <path
+                d="M6 14H10L14.5 33H35"
+                stroke="#0e5c53"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+
+              <path
+                d="M13 19H37.5L34.5 31H16.5"
+                stroke="#0e5c53"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+
               <circle cx="19" cy="39" r="3" fill="#0e5c53" />
               <circle cx="31" cy="39" r="3" fill="#0e5c53" />
             </svg>
+
             <span class="logo-text">JollyCart</span>
           </a>
         </div>
@@ -47,15 +69,22 @@
             <li>
               <a href="index.html">Strona główna</a>
             </li>
+
             <li>
               <div id="auth-user">
-                <a href="login.html" class="auth-login-link">Logowanie</a>
+                <a href="login.html" class="auth-login-link"> Logowanie </a>
               </div>
             </li>
           </ul>
         </nav>
 
-        <button class="menu-toggle" onclick="toggleMenu()" aria-label="Otwórz menu">☰</button>
+        <button
+          class="menu-toggle"
+          onclick="toggleMenu()"
+          aria-label="Otwórz menu"
+        >
+          ☰
+        </button>
       </div>
     </header>
 
@@ -70,8 +99,10 @@
           </div>
 
           <div>
-            <span class="settings-badge">KONTO PRYWATNE</span>
+            <span class="settings-badge"> KONTO PRYWATNE </span>
+
             <h1>Edytuj swój profil</h1>
+
             <p>Zmień informacje, które są powiązane z Twoim kontem.</p>
           </div>
         </div>
@@ -79,8 +110,10 @@
         <section class="settings-card">
           <div class="settings-card-header">
             <div>
-              <span class="settings-eyebrow">ZDJĘCIE PROFILOWE</span>
+              <span class="settings-eyebrow"> ZDJĘCIE PROFILOWE </span>
+
               <h2>Twoje zdjęcie</h2>
+
               <p>Dodaj zdjęcie, które będzie widoczne przy Twoim koncie.</p>
             </div>
           </div>
@@ -97,11 +130,23 @@
               <label class="settings-secondary-button" for="avatar-input">
                 Zmień zdjęcie
               </label>
-              <input id="avatar-input" type="file" accept="image/*" hidden />
-              <button type="button" class="settings-text-button" id="remove-avatar-button">
+
+              <input
+                id="avatar-input"
+                type="file"
+                accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                hidden
+              />
+
+              <button
+                type="button"
+                class="settings-text-button"
+                id="remove-avatar-button"
+              >
                 Usuń zdjęcie
               </button>
-              <span class="settings-help">JPG, PNG, WEBP. Maksymalnie 5 MB.</span>
+
+              <span class="settings-help"> JPG, PNG. Maksymalnie 5 MB. </span>
             </div>
           </div>
         </section>
@@ -109,7 +154,8 @@
         <section class="settings-card">
           <div class="settings-card-header">
             <div>
-              <span class="settings-eyebrow">PODSTAWOWE INFORMACJE</span>
+              <span class="settings-eyebrow"> PODSTAWOWE INFORMACJE </span>
+
               <h2>Informacje o Tobie</h2>
             </div>
           </div>
@@ -117,32 +163,128 @@
           <form id="profile-settings-form" class="settings-form">
             <div class="settings-form-grid">
               <div class="settings-field settings-field-full">
-                <label for="nickname">Nazwa użytkownika</label>
-                <input id="nickname" name="nickname" type="text" maxlength="30" required />
+                <label for="nickname"> Nazwa użytkownika </label>
+
+                <input
+                  id="nickname"
+                  name="nickname"
+                  type="text"
+                  maxlength="30"
+                  required
+                />
               </div>
 
               <div class="settings-field">
-                <label for="email">Email</label>
+                <label for="email"> Email </label>
+
                 <input id="email" name="email" type="email" disabled />
-                <span class="settings-help">Email jest używany do logowania i nie można go tutaj zmienić.</span>
+
+                <span class="settings-help">
+                  Email jest używany do logowania i nie można go tutaj zmienić.
+                </span>
               </div>
 
               <div class="settings-field">
+                <label for="phone-country">Kraj</label>
+
+                <select id="phone-country" name="phone-country">
+                  <option value="PL" data-code="+48" data-min="9" data-max="9">
+                    Polska (+48)
+                  </option>
+
+                  <option value="UA" data-code="+380" data-min="9" data-max="9">
+                    Ukraina (+380)
+                  </option>
+
+                  <option
+                    value="DE"
+                    data-code="+49"
+                    data-min="10"
+                    data-max="11"
+                  >
+                    Niemcy (+49)
+                  </option>
+
+                  <option
+                    value="GB"
+                    data-code="+44"
+                    data-min="10"
+                    data-max="10"
+                  >
+                    Wielka Brytania (+44)
+                  </option>
+
+                  <option value="FR" data-code="+33" data-min="9" data-max="9">
+                    Francja (+33)
+                  </option>
+
+                  <option value="CZ" data-code="+420" data-min="9" data-max="9">
+                    Czechy (+420)
+                  </option>
+
+                  <option value="SK" data-code="+421" data-min="9" data-max="9">
+                    Słowacja (+421)
+                  </option>
+
+                  <option
+                    value="AT"
+                    data-code="+43"
+                    data-min="10"
+                    data-max="13"
+                  >
+                    Austria (+43)
+                  </option>
+                </select>
+
                 <label for="phone">Numer telefonu</label>
-                <input id="phone" name="phone" type="tel" maxlength="30" placeholder="np. +48 123 456 789" />
+
+                <div class="phone-input-wrapper">
+                  <span id="phone-country-code" class="phone-country-code"
+                    >+48</span
+                  >
+
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    inputmode="numeric"
+                    autocomplete="tel-national"
+                    placeholder="np. 123456789"
+                  />
+                </div>
+
+                <span id="phone-help" class="settings-help">
+                  Polska: wpisz dokładnie 9 cyfr.
+                </span>
               </div>
 
               <div class="settings-field settings-field-full">
-                <label for="location">Lokalizacja</label>
-                <input id="location" name="location" type="text" maxlength="100" placeholder="np. Warszawa" />
+                <label for="location"> Lokalizacja </label>
+
+                <input
+                  id="location"
+                  name="location"
+                  type="text"
+                  maxlength="100"
+                  placeholder="np. Warszawa"
+                />
               </div>
             </div>
 
-            <div id="settings-message" class="settings-message" aria-live="polite"></div>
+            <div
+              id="settings-message"
+              class="settings-message"
+              aria-live="polite"
+            ></div>
 
             <div class="settings-actions">
-              <a href="index.html" class="settings-cancel-button">Anuluj</a>
-              <button type="submit" class="settings-save-button" id="save-profile-button">
+              <a href="index.html" class="settings-cancel-button"> Anuluj </a>
+
+              <button
+                type="submit"
+                class="settings-save-button"
+                id="save-profile-button"
+              >
                 Zapisz zmiany
               </button>
             </div>

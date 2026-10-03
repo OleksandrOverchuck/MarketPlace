@@ -29,12 +29,30 @@
               xmlns="http://www.w3.org/2000/svg"
               aria-hidden="true"
             >
-              <path d="M14 9 Q15 6 18 7" stroke="#2f6b3a" stroke-width="1.6" stroke-linecap="round" fill="none" />
+              <path
+                d="M14 9 Q15 6 18 7"
+                stroke="#2f6b3a"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                fill="none"
+              />
               <circle cx="16" cy="11" r="5.5" fill="#e2574c" />
               <path d="M25 4 L29.5 14 L20.5 14 Z" fill="#e8a33d" />
               <circle cx="32" cy="12" r="5" fill="#5b8c3e" />
-              <path d="M6 14H10L14.5 33H35" stroke="#0e5c53" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M13 19H37.5L34.5 31H16.5" stroke="#0e5c53" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+              <path
+                d="M6 14H10L14.5 33H35"
+                stroke="#0e5c53"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M13 19H37.5L34.5 31H16.5"
+                stroke="#0e5c53"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
               <circle cx="19" cy="39" r="3" fill="#0e5c53" />
               <circle cx="31" cy="39" r="3" fill="#0e5c53" />
             </svg>
@@ -67,9 +85,15 @@
                 </button>
 
                 <div class="nav-dropdown-menu">
-                  <a href="index.html#offers" class="account-menu-item">Ogłoszenia</a>
-                  <a href="index.html#categories" class="account-menu-item">Kategorie</a>
-                  <a href="index.html#search" class="account-menu-item">Szukaj</a>
+                  <a href="index.html#offers" class="account-menu-item"
+                    >Ogłoszenia</a
+                  >
+                  <a href="index.html#categories" class="account-menu-item"
+                    >Kategorie</a
+                  >
+                  <a href="index.html#search" class="account-menu-item"
+                    >Szukaj</a
+                  >
                 </div>
               </div>
             </li>
@@ -97,7 +121,10 @@
         <div class="post-ad-heading">
           <span class="post-ad-badge">NOWE OGŁOSZENIE</span>
           <h1>Dodaj ogłoszenie</h1>
-          <p>Podaj najważniejsze informacje, aby inni mogli łatwo znaleźć Twoje ogłoszenie.</p>
+          <p>
+            Podaj najważniejsze informacje, aby inni mogli łatwo znaleźć Twoje
+            ogłoszenie.
+          </p>
         </div>
 
         <form id="post-ad-form" class="post-ad-form">
@@ -137,7 +164,9 @@
               <div class="post-ad-field">
                 <label for="category">Kategoria <span>*</span></label>
                 <select id="category" name="categoryId" required>
-                  <option value="" selected disabled>Ładowanie kategorii...</option>
+                  <option value="" selected disabled>
+                    Ładowanie kategorii...
+                  </option>
                 </select>
               </div>
 
@@ -150,7 +179,9 @@
                   maxlength="150"
                   placeholder="Np. Opole"
                 />
-                <span class="post-ad-help">Możesz podać miasto lub dokładniejszą lokalizację.</span>
+                <span class="post-ad-help"
+                  >Możesz podać miasto lub dokładniejszą lokalizację.</span
+                >
               </div>
 
               <div class="post-ad-field">
@@ -159,9 +190,11 @@
                   id="image"
                   name="image"
                   type="file"
-                  accept="image/*"
+                  accept=".png,.jpg,.jpeg,image/png,image/jpeg"
                 />
-                <span class="post-ad-help">Opcjonalne. Maksymalnie 10 MB.</span>
+                <span class="post-ad-help">
+                  Opcjonalne. PNG lub JPG. Maksymalnie 10 MB.
+                </span>
               </div>
 
               <div class="post-ad-field post-ad-field-full">
@@ -198,15 +231,15 @@
             </div>
           </section>
 
-          <div id="post-ad-message" class="post-ad-message" aria-live="polite"></div>
+          <div
+            id="post-ad-message"
+            class="post-ad-message"
+            aria-live="polite"
+          ></div>
 
           <div class="post-ad-actions">
             <a href="index.html" class="post-ad-cancel">Anuluj</a>
-            <button
-              type="submit"
-              class="post-ad-submit"
-              id="post-ad-submit"
-            >
+            <button type="submit" class="post-ad-submit" id="post-ad-submit">
               Dodaj ogłoszenie
             </button>
           </div>
