@@ -90,27 +90,52 @@
 
     <main class="settings-page">
       <div class="settings-container">
-        <div class="settings-heading">
-          <div class="settings-heading-avatar" id="settings-avatar-preview">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="8" r="4"></circle>
-              <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
-            </svg>
+        <!-- =========================
+             BANER PROFILU
+             ========================= -->
+
+        <header class="settings-hero">
+          <div class="settings-hero-avatar-wrap">
+            <div class="settings-heading-avatar" id="settings-avatar-preview">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
+              </svg>
+            </div>
           </div>
 
-          <div>
-            <span class="settings-badge"> KONTO PRYWATNE </span>
+          <div class="settings-hero-text">
+            <span class="settings-badge">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="5" y="11" width="14" height="9" rx="2"></rect>
+                <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
+              </svg>
+              Konto prywatne
+            </span>
 
             <h1>Edytuj swój profil</h1>
 
             <p>Zmień informacje, które są powiązane z Twoim kontem.</p>
           </div>
-        </div>
+        </header>
+
+        <!-- =========================
+             ZDJĘCIE PROFILOWE
+             ========================= -->
 
         <section class="settings-card">
           <div class="settings-card-header">
+            <span class="settings-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"
+                ></path>
+                <circle cx="12" cy="13" r="3.5"></circle>
+              </svg>
+            </span>
+
             <div>
-              <span class="settings-eyebrow"> ZDJĘCIE PROFILOWE </span>
+              <span class="settings-eyebrow">Zdjęcie profilowe</span>
 
               <h2>Twoje zdjęcie</h2>
 
@@ -127,43 +152,66 @@
             </div>
 
             <div class="avatar-actions">
-              <label class="settings-secondary-button" for="avatar-input">
-                Zmień zdjęcie
-              </label>
+              <div class="avatar-buttons">
+                <input
+                  id="avatar-input"
+                  class="visually-hidden"
+                  type="file"
+                  accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                />
 
-              <input
-                id="avatar-input"
-                type="file"
-                accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-                hidden
-              />
+                <label class="settings-secondary-button" for="avatar-input">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 16V5M7.5 9.5L12 5l4.5 4.5M5 19h14"></path>
+                  </svg>
+                  Zmień zdjęcie
+                </label>
 
-              <button
-                type="button"
-                class="settings-text-button"
-                id="remove-avatar-button"
-              >
-                Usuń zdjęcie
-              </button>
+                <button
+                  type="button"
+                  class="settings-text-button"
+                  id="remove-avatar-button"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10.5 11v5M13.5 11v5"
+                    ></path>
+                  </svg>
+                  Usuń zdjęcie
+                </button>
+              </div>
 
-              <span class="settings-help"> JPG, PNG. Maksymalnie 5 MB. </span>
+              <span class="settings-help">JPG, PNG. Maksymalnie 5 MB.</span>
             </div>
           </div>
         </section>
 
+        <!-- =========================
+             PODSTAWOWE INFORMACJE
+             ========================= -->
+
         <section class="settings-card">
           <div class="settings-card-header">
+            <span class="settings-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
+              </svg>
+            </span>
+
             <div>
-              <span class="settings-eyebrow"> PODSTAWOWE INFORMACJE </span>
+              <span class="settings-eyebrow">Podstawowe informacje</span>
 
               <h2>Informacje o Tobie</h2>
+
+              <p>Te dane widzą inni użytkownicy przy Twoich ogłoszeniach.</p>
             </div>
           </div>
 
           <form id="profile-settings-form" class="settings-form">
             <div class="settings-form-grid">
-              <div class="settings-field settings-field-full">
-                <label for="nickname"> Nazwa użytkownika </label>
+              <div class="settings-field">
+                <label for="nickname">Nazwa użytkownika</label>
 
                 <input
                   id="nickname"
@@ -175,7 +223,19 @@
               </div>
 
               <div class="settings-field">
-                <label for="email"> Email </label>
+                <label for="location">Lokalizacja</label>
+
+                <input
+                  id="location"
+                  name="location"
+                  type="text"
+                  maxlength="100"
+                  placeholder="np. Warszawa"
+                />
+              </div>
+
+              <div class="settings-field settings-field-full">
+                <label for="email">Email</label>
 
                 <input id="email" name="email" type="email" disabled />
 
@@ -184,10 +244,12 @@
                 </span>
               </div>
 
-              <div class="settings-field">
-                <label for="phone-country">Kraj</label>
+              <div class="settings-field settings-field-full">
+                <label for="phone">Numer telefonu</label>
 
-                <select id="phone-country" name="phone-country">
+                <div class="phone-group">
+                  <div class="phone-select-wrapper">
+                    <select id="phone-country" name="phone-country" aria-label="Kraj">
                   <option value="PL" data-code="+48" data-min="9" data-max="9">
                     Polska (+48)
                   </option>
@@ -235,22 +297,22 @@
                     Austria (+43)
                   </option>
                 </select>
+                  </div>
 
-                <label for="phone">Numer telefonu</label>
+                  <div class="phone-input-wrapper">
+                    <span id="phone-country-code" class="phone-country-code"
+                      >+48</span
+                    >
 
-                <div class="phone-input-wrapper">
-                  <span id="phone-country-code" class="phone-country-code"
-                    >+48</span
-                  >
-
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    inputmode="numeric"
-                    autocomplete="tel-national"
-                    placeholder="np. 123456789"
-                  />
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      inputmode="numeric"
+                      autocomplete="tel-national"
+                      placeholder="np. 123456789"
+                    />
+                  </div>
                 </div>
 
                 <span id="phone-help" class="settings-help">
@@ -258,17 +320,6 @@
                 </span>
               </div>
 
-              <div class="settings-field settings-field-full">
-                <label for="location"> Lokalizacja </label>
-
-                <input
-                  id="location"
-                  name="location"
-                  type="text"
-                  maxlength="100"
-                  placeholder="np. Warszawa"
-                />
-              </div>
             </div>
 
             <div
@@ -278,7 +329,7 @@
             ></div>
 
             <div class="settings-actions">
-              <a href="index.html" class="settings-cancel-button"> Anuluj </a>
+              <a href="index.html" class="settings-cancel-button">Anuluj</a>
 
               <button
                 type="submit"
