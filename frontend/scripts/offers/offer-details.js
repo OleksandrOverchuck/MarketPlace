@@ -84,7 +84,8 @@ function setupOfferGallery(root) {
   }
 
   const counter = gallery.querySelector(".offer-gallery-counter");
-  const dots = gallery.querySelectorAll(".offer-gallery-dot");
+  const thumbsBox = root.querySelector(".offer-gallery-thumbs");
+  const thumbs = root.querySelectorAll(".offer-gallery-thumb");
   let current = 0;
 
   function show(index) {
@@ -94,9 +95,24 @@ function setupOfferGallery(root) {
 
     counter.textContent = `${current + 1} / ${total}`;
 
-    dots.forEach((dot, dotIndex) => {
-      dot.classList.toggle("is-active", dotIndex === current);
+    thumbs.forEach((thumb, thumbIndex) => {
+      const isActive = thumbIndex === current;
+
+      thumb.classList.toggle("is-active", isActive);
+      thumb.setAttribute("aria-current", isActive ? "true" : "false");
     });
+
+    // Aktywna miniatura zawsze w widocznej części paska (bez przewijania strony).
+    const activeThumb = thumbs[current];
+
+    if (thumbsBox && activeThumb) {
+      thumbsBox.scrollTo({
+        left:
+          activeThumb.offsetLeft -
+          (thumbsBox.clientWidth - activeThumb.offsetWidth) / 2,
+        behavior: "smooth",
+      });
+    }
   }
 
   gallery
@@ -107,8 +123,8 @@ function setupOfferGallery(root) {
     .querySelector(".offer-gallery-next")
     .addEventListener("click", () => show(current + 1));
 
-  dots.forEach((dot) => {
-    dot.addEventListener("click", () => show(Number(dot.dataset.index)));
+  thumbs.forEach((thumb) => {
+    thumb.addEventListener("click", () => show(Number(thumb.dataset.index)));
   });
 
   gallery.addEventListener("keydown", (event) => {
@@ -578,66 +594,122 @@ function setupImageLightbox(root) {
   });
 }
 
+const DETAILS_ICONS = {
+  pin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+  calendar:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg>',
+  shield:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.6-3 8.2-7 10-4-1.8-7-5.4-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+  image:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>',
+  zoom: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4M11 8v6M8 11h6"/></svg>',
+};
+
 function renderOfferDetails(root, offer, images) {
-  const price =
-    offer.price == null
-      ? "Cena do uzgodnienia"
-      : `${formatDetailsPrice(offer.price)} zł`;
+  const hasPrice = offer.price != null;
+
+  const price = hasPrice
+    ? `${formatDetailsPrice(offer.price)} zł`
+    : "Cena do uzgodnienia";
+
+  const title = escapeDetailsHtml(offer.title);
+  const categoryName = offer.categoryName || "Bez kategorii";
+  const sellerName = offer.nickname || "Użytkownik";
+  const sellerInitial = sellerName.trim().charAt(0).toUpperCase() || "U";
+  const statusNotice = getDetailsStatusNotice(offer.status);
+
+  document.title = `${offer.title} – JollyCart`;
+
+  const breadcrumbCurrent = document.getElementById(
+    "offer-breadcrumb-current",
+  );
+
+  if (breadcrumbCurrent) {
+    breadcrumbCurrent.textContent = categoryName;
+  }
 
   const imageHtml = images.length
     ? `
-      <div
-        class="offer-gallery"
-        tabindex="0"
-        role="region"
-        aria-roledescription="karuzela"
-        aria-label="Zdjęcia ogłoszenia"
-      >
-        <div class="offer-gallery-track">
-          ${images
-            .map(
-              (image, index) => `
-                <div class="offer-gallery-slide">
-                  <img
-                    src="${OFFER_DETAILS_API_BASE_URL}/api/offers/images/${encodeURIComponent(image.id)}"
-                    alt="${escapeDetailsHtml(offer.title)} – zdjęcie ${index + 1} z ${images.length}"
-                    draggable="false"
-                  />
+      <div class="offer-gallery-wrap">
+        <div
+          class="offer-gallery"
+          tabindex="0"
+          role="region"
+          aria-roledescription="karuzela"
+          aria-label="Zdjęcia ogłoszenia"
+        >
+          <div class="offer-gallery-track">
+            ${images
+              .map((image, index) => {
+                const imageUrl = `${OFFER_DETAILS_API_BASE_URL}/api/offers/images/${encodeURIComponent(image.id)}`;
+
+                return `
+                  <div class="offer-gallery-slide" style="--slide-bg: url('${imageUrl}')">
+                    <img
+                      src="${imageUrl}"
+                      alt="${title} – zdjęcie ${index + 1} z ${images.length}"
+                      draggable="false"
+                    />
+                  </div>
+                `;
+              })
+              .join("")}
+          </div>
+
+          ${
+            statusNotice
+              ? `<span class="offer-gallery-status is-${statusNotice.tone}">${escapeDetailsHtml(statusNotice.label)}</span>`
+              : ""
+          }
+
+          <span class="offer-gallery-hint" aria-hidden="true">
+            ${DETAILS_ICONS.zoom}
+            Kliknij, aby powiększyć
+          </span>
+
+          ${
+            images.length > 1
+              ? `
+                <button
+                  type="button"
+                  class="offer-gallery-arrow offer-gallery-prev"
+                  aria-label="Poprzednie zdjęcie"
+                >&#8249;</button>
+
+                <button
+                  type="button"
+                  class="offer-gallery-arrow offer-gallery-next"
+                  aria-label="Następne zdjęcie"
+                >&#8250;</button>
+
+                <div class="offer-gallery-counter" aria-live="polite">
+                  1 / ${images.length}
                 </div>
-              `,
-            )
-            .join("")}
+              `
+              : ""
+          }
         </div>
 
         ${
           images.length > 1
             ? `
-              <button
-                type="button"
-                class="offer-gallery-arrow offer-gallery-prev"
-                aria-label="Poprzednie zdjęcie"
-              >&#8249;</button>
-
-              <button
-                type="button"
-                class="offer-gallery-arrow offer-gallery-next"
-                aria-label="Następne zdjęcie"
-              >&#8250;</button>
-
-              <div class="offer-gallery-counter" aria-live="polite">
-                1 / ${images.length}
-              </div>
-
-              <div class="offer-gallery-dots">
+              <div class="offer-gallery-thumbs">
                 ${images
                   .map(
-                    (_, index) => `
+                    (image, index) => `
                       <button
                         type="button"
-                        class="offer-gallery-dot"
+                        class="offer-gallery-thumb"
                         data-index="${index}"
-                        aria-label="Zdjęcie ${index + 1}"
-                      ></button>
+                        aria-label="Pokaż zdjęcie ${index + 1} z ${images.length}"
+                      >
+                        <img
+                          src="${OFFER_DETAILS_API_BASE_URL}/api/offers/images/${encodeURIComponent(image.id)}"
+                          alt=""
+                          loading="lazy"
+                          draggable="false"
+                        />
+                      </button>
                     `,
                   )
                   .join("")}
@@ -649,75 +721,153 @@ function renderOfferDetails(root, offer, images) {
     `
     : `
       <div class="offer-details-no-image">
-        <span>${getDetailsIcon(offer.type)}</span>
-        <p>Brak zdjęcia</p>
+        ${DETAILS_ICONS.image}
+        <p>Sprzedający nie dodał zdjęć</p>
+        ${
+          statusNotice
+            ? `<span class="offer-gallery-status is-${statusNotice.tone}">${escapeDetailsHtml(statusNotice.label)}</span>`
+            : ""
+        }
       </div>
     `;
 
+  const updatedAt =
+    offer.updatedAt &&
+    offer.createdAt &&
+    formatDetailsLongDate(offer.updatedAt) !==
+      formatDetailsLongDate(offer.createdAt)
+      ? formatDetailsLongDate(offer.updatedAt)
+      : null;
+
   root.innerHTML = `
-    <article class="offer-details-card">
-      <div class="offer-details-media">
+    <div class="od-layout">
+      <section class="od-gallery-card" aria-label="Zdjęcia">
         ${imageHtml}
-      </div>
+      </section>
 
-      <div class="offer-details-content">
-        <div class="offer-details-topline">
-          <span class="offer-details-category">
-            ${escapeDetailsHtml(offer.categoryName || "Bez kategorii")}
-          </span>
+      <aside class="od-summary">
+        <div class="od-card od-summary-card">
+          <div class="od-badges">
+            <span class="od-badge od-badge-${escapeDetailsHtml(String(offer.type || "").toLowerCase())}">
+              ${escapeDetailsHtml(getDetailsTypeLabel(offer.type))}
+            </span>
 
-          <span class="offer-details-type">
-            ${escapeDetailsHtml(getDetailsTypeLabel(offer.type))}
-          </span>
-        </div>
-
-        <h1>${escapeDetailsHtml(offer.title)}</h1>
-
-        <div class="offer-details-price">
-          ${escapeDetailsHtml(price)}
-        </div>
-
-        <button
-          id="send-message-button"
-          class="send-message-button"
-          type="button"
-          style="display: none;"
-        >
-          Wyślij wiadomość
-        </button>
-
-        <div class="offer-details-info-grid">
-          <div>
-            <span>Lokalizacja</span>
-            <strong>
-              ${escapeDetailsHtml(offer.location || "Nie podano")}
-            </strong>
+            <span class="od-category">${escapeDetailsHtml(categoryName)}</span>
           </div>
 
-          <div>
-            <span>Sprzedający</span>
-            <strong>
-              ${escapeDetailsHtml(offer.nickname || "Użytkownik")}
-            </strong>
+          ${
+            statusNotice
+              ? `<p class="od-status-notice is-${statusNotice.tone}">${escapeDetailsHtml(statusNotice.message)}</p>`
+              : ""
+          }
+
+          <h1>${title}</h1>
+
+          <div class="od-price-block">
+            <span class="od-price-label">${escapeDetailsHtml(getDetailsPriceLabel(offer.type))}</span>
+            <div class="od-price${hasPrice ? "" : " is-negotiable"}">
+              ${escapeDetailsHtml(price)}
+            </div>
           </div>
 
-          <div>
-            <span>Dodano</span>
-            <strong>
-              ${escapeDetailsHtml(formatDetailsDate(offer.createdAt))}
-            </strong>
+          <ul class="od-meta">
+            <li>
+              ${DETAILS_ICONS.pin}
+              <span>${escapeDetailsHtml(offer.location || "Lokalizacja nie została podana")}</span>
+            </li>
+
+            <li>
+              ${DETAILS_ICONS.calendar}
+              <span>Dodano ${escapeDetailsHtml(formatDetailsLongDate(offer.createdAt))}</span>
+            </li>
+          </ul>
+
+          <button
+            id="send-message-button"
+            class="send-message-button"
+            type="button"
+            style="display: none;"
+          >
+            Wyślij wiadomość
+          </button>
+
+          <p class="od-login-hint" id="od-login-hint" hidden>
+            Chcesz napisać do ogłaszającego?
+            <a href="login.html">Zaloguj się</a>
+          </p>
+        </div>
+
+        <div class="od-card od-seller-card">
+          <div class="od-seller-avatar" aria-hidden="true">
+            ${escapeDetailsHtml(sellerInitial)}
+          </div>
+
+          <div class="od-seller-info">
+            <strong>${escapeDetailsHtml(sellerName)}</strong>
+            <span>${escapeDetailsHtml(getDetailsSellerRole(offer.type))}</span>
           </div>
         </div>
 
-        <section class="offer-details-description">
+        <div class="od-safety">
+          <h2>${DETAILS_ICONS.shield} ${escapeDetailsHtml(getDetailsSafety(offer.type).title)}</h2>
+          <ul>
+            ${getDetailsSafety(offer.type)
+              .tips.map((tip) => `<li>${escapeDetailsHtml(tip)}</li>`)
+              .join("")}
+          </ul>
+        </div>
+      </aside>
+
+      <div class="od-content">
+        <section class="od-card od-description">
           <h2>Opis</h2>
 
-          <p>
-            ${escapeDetailsHtml(offer.description || "Brak opisu.")}
-          </p>
+          <p>${escapeDetailsHtml(offer.description || "Brak opisu.")}</p>
+        </section>
+
+        <section class="od-card od-details">
+          <h2>Szczegóły ogłoszenia</h2>
+
+          <dl class="od-details-list">
+            <div>
+              <dt>Kategoria</dt>
+              <dd>${escapeDetailsHtml(categoryName)}</dd>
+            </div>
+
+            <div>
+              <dt>Typ ogłoszenia</dt>
+              <dd>${escapeDetailsHtml(getDetailsTypeLabel(offer.type))}</dd>
+            </div>
+
+            <div>
+              <dt>Lokalizacja</dt>
+              <dd>${escapeDetailsHtml(offer.location || "Nie podano")}</dd>
+            </div>
+
+            <div>
+              <dt>Data dodania</dt>
+              <dd>${escapeDetailsHtml(formatDetailsLongDate(offer.createdAt))}</dd>
+            </div>
+
+            ${
+              updatedAt
+                ? `
+                  <div>
+                    <dt>Ostatnia aktualizacja</dt>
+                    <dd>${escapeDetailsHtml(updatedAt)}</dd>
+                  </div>
+                `
+                : ""
+            }
+
+            <div>
+              <dt>Numer ogłoszenia</dt>
+              <dd>#${escapeDetailsHtml(String(offer.id))}</dd>
+            </div>
+          </dl>
         </section>
       </div>
-    </article>
+    </div>
   `;
 }
 
@@ -734,9 +884,11 @@ async function setupMessageButton(offer) {
       credentials: "include",
     });
 
-    // Niezalogowany użytkownik nie dostaje przycisku.
+    // Niezalogowany użytkownik nie dostaje przycisku,
+    // tylko podpowiedź, żeby się zalogować.
     if (!response.ok) {
       button.style.display = "none";
+      showDetailsLoginHint();
       return;
     }
 
@@ -744,6 +896,7 @@ async function setupMessageButton(offer) {
 
     if (!currentUser) {
       button.style.display = "none";
+      showDetailsLoginHint();
       return;
     }
 
@@ -897,14 +1050,86 @@ async function setupMessageButton(offer) {
   }
 }
 
-function getDetailsIcon(type) {
+function getDetailsPriceLabel(type) {
   return (
     {
-      SALE: "🛍️",
-      SERVICE: "🛠️",
-      JOB: "💼",
-    }[type] || "📦"
+      SALE: "Cena",
+      SERVICE: "Cena usługi",
+      JOB: "Wynagrodzenie",
+    }[type] || "Cena"
   );
+}
+
+function getDetailsSellerRole(type) {
+  return (
+    {
+      SALE: "Sprzedający",
+      SERVICE: "Usługodawca",
+      JOB: "Pracodawca",
+    }[type] || "Ogłaszający"
+  );
+}
+
+function getDetailsStatusNotice(status) {
+  if (status === "SOLD") {
+    return {
+      tone: "sold",
+      label: "Sprzedane",
+      message: "To ogłoszenie zostało oznaczone jako sprzedane.",
+    };
+  }
+
+  if (status === "INACTIVE") {
+    return {
+      tone: "inactive",
+      label: "Nieaktywne",
+      message: "To ogłoszenie jest obecnie nieaktywne.",
+    };
+  }
+
+  return null;
+}
+
+function getDetailsSafety(type) {
+  if (type === "JOB") {
+    return {
+      title: "Bezpieczna rekrutacja",
+      tips: [
+        "Nie płać za udział w rekrutacji ani za szkolenia.",
+        "Nie wysyłaj skanów dokumentów bez sprawdzenia firmy.",
+        "Pytaj o szczegóły umowy przed podjęciem pracy.",
+      ],
+    };
+  }
+
+  return {
+    title: "Bezpieczna transakcja",
+    tips: [
+      "Umów się w publicznym, dobrze oświetlonym miejscu.",
+      "Sprawdź przedmiot lub usługę przed zapłatą.",
+      "Nie wysyłaj zaliczek nieznajomym.",
+    ],
+  };
+}
+
+function formatDetailsLongDate(value) {
+  if (!value) {
+    return "brak daty";
+  }
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? "brak daty"
+    : date.toLocaleDateString("pl-PL", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+}
+
+function showDetailsLoginHint() {
+  document.getElementById("od-login-hint")?.removeAttribute("hidden");
 }
 
 function getDetailsTypeLabel(type) {
@@ -921,7 +1146,7 @@ function getDetailsTypeLabel(type) {
 
 function formatDetailsPrice(value) {
   return new Intl.NumberFormat("pl-PL", {
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(Number(value));
 }

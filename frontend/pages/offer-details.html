@@ -89,9 +89,11 @@
 
     <main class="offer-details-page">
       <div class="container">
-        <a href="index.html#offers" class="offer-details-back">
-          ← Wróć do ogłoszeń
-        </a>
+        <nav class="offer-breadcrumb" aria-label="Ścieżka nawigacji">
+          <a href="index.html">Strona główna</a>
+          <a href="index.html#offers">Ogłoszenia</a>
+          <span id="offer-breadcrumb-current" aria-current="page"></span>
+        </nav>
 
         <div id="offer-details-root" class="offer-details-root">
           <div class="offer-details-loading">Ładowanie ogłoszenia...</div>

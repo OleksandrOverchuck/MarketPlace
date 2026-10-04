@@ -1,74 +1,154 @@
+/* =========================================================
+   STRONA OGŁOSZENIA
+   ========================================================= */
+
 .offer-details-page {
   min-height: calc(100vh - 90px);
-  padding: 55px 0 90px;
+
+  padding: 34px 0 96px;
+
   background: var(--paper);
 }
 
-.offer-details-back {
-  display: inline-block;
+/* =========================
+   OKRUSZKI (BREADCRUMB)
+   ========================= */
+
+.offer-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+
   margin-bottom: 22px;
 
-  color: var(--teal-dark);
-  font-weight: 700;
-  text-decoration: none;
+  color: var(--ink-soft);
+
+  font-size: 14px;
 }
 
-.offer-details-back:hover {
+.offer-breadcrumb a {
+  color: var(--ink-soft);
+
+  text-decoration: none;
+
+  transition: color 0.2s ease;
+}
+
+.offer-breadcrumb a:hover {
+  color: var(--teal);
+
   text-decoration: underline;
 }
 
+.offer-breadcrumb > * + *::before {
+  content: "›";
+
+  margin-right: 8px;
+
+  color: var(--ink-soft);
+
+  opacity: 0.55;
+
+  text-decoration: none;
+}
+
+.offer-breadcrumb [aria-current] {
+  color: var(--ink);
+
+  font-weight: 600;
+}
+
 /* =========================
-   GŁÓWNA KARTA OGŁOSZENIA
+   UKŁAD STRONY
    ========================= */
 
-.offer-details-card {
+.od-layout {
   display: grid;
 
-  grid-template-columns:
-    minmax(320px, 0.95fr)
-    minmax(360px, 1.05fr);
+  grid-template-columns: minmax(0, 1fr) 390px;
+  grid-template-areas:
+    "gallery summary"
+    "content summary";
 
-  overflow: hidden;
+  gap: 24px 30px;
+
+  align-items: start;
+}
+
+.od-gallery-card {
+  grid-area: gallery;
+
+  min-width: 0;
+
+  padding: 14px;
 
   background: var(--white);
 
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 16px;
 
-  box-shadow: 0 10px 28px rgba(28, 35, 33, 0.07);
+  box-shadow: 0 10px 28px rgba(28, 35, 33, 0.06);
+}
+
+.od-content {
+  grid-area: content;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  min-width: 0;
+}
+
+.od-summary {
+  grid-area: summary;
+
+  position: sticky;
+  top: 104px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  min-width: 0;
+}
+
+.od-card {
+  background: var(--white);
+
+  border: 1px solid var(--line);
+  border-radius: 16px;
+
+  box-shadow: 0 10px 28px rgba(28, 35, 33, 0.06);
 }
 
 /* =========================
-   LEWA STRONA - ZDJĘCIA
+   GALERIA
    ========================= */
-
-.offer-details-media {
-  min-height: 520px;
-
-  background: var(--paper-deep);
-}
 
 .offer-gallery {
   position: relative;
 
-  width: 100%;
-  height: 100%;
-  min-height: 520px;
+  aspect-ratio: 4 / 3;
 
   overflow: hidden;
+
+  border-radius: 10px;
+
+  background: var(--paper-deep);
 
   outline: none;
 }
 
 .offer-gallery:focus-visible {
-  box-shadow: inset 0 0 0 3px var(--amber);
+  box-shadow: 0 0 0 3px var(--amber);
 }
 
 .offer-gallery-track {
   display: flex;
 
   height: 100%;
-  min-height: 520px;
 
   transition: transform 0.35s ease;
 }
@@ -78,7 +158,22 @@
 
   flex: 0 0 100%;
 
-  min-height: 520px;
+  overflow: hidden;
+}
+
+/* Rozmyte tło z tego samego zdjęcia - zdjęcia pionowe i panoramiczne
+   nie zostawiają pustych pasów. */
+.offer-gallery-slide::before {
+  content: "";
+
+  position: absolute;
+  inset: -32px;
+
+  background: var(--slide-bg) center / cover no-repeat;
+
+  filter: blur(28px) brightness(0.92);
+
+  opacity: 0.9;
 }
 
 .offer-gallery-slide img {
@@ -90,7 +185,7 @@
   width: 100%;
   height: 100%;
 
-  object-fit: cover;
+  object-fit: contain;
 
   user-select: none;
 }
@@ -111,7 +206,7 @@
   border: none;
   border-radius: 50%;
 
-  background: rgba(255, 253, 247, 0.92);
+  background: rgba(255, 253, 247, 0.94);
   color: var(--ink);
 
   font-family: inherit;
@@ -132,6 +227,11 @@
 .offer-gallery-arrow:hover {
   background: var(--white);
   color: var(--teal);
+}
+
+.offer-gallery-arrow:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 2px;
 }
 
 .offer-gallery-prev {
@@ -156,123 +256,331 @@
 
   font-size: 13px;
   font-weight: 600;
+
+  pointer-events: none;
 }
 
-.offer-gallery-dots {
+.offer-gallery-hint {
   position: absolute;
-  left: 0;
-  right: 0;
+  right: 14px;
   bottom: 14px;
 
-  display: flex;
-  justify-content: center;
-  gap: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 6px 12px;
+
+  border-radius: 999px;
+
+  background: rgba(28, 35, 33, 0.72);
+  color: #ffffff;
+
+  font-size: 12.5px;
+  font-weight: 600;
+
+  pointer-events: none;
+
+  opacity: 0;
+
+  transition: opacity 0.2s ease;
 }
 
-.offer-gallery-dot {
-  width: 10px;
-  height: 10px;
+.offer-gallery-hint svg {
+  width: 16px;
+  height: 16px;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.offer-gallery:hover .offer-gallery-hint,
+.offer-gallery:focus-visible .offer-gallery-hint {
+  opacity: 1;
+}
+
+.offer-gallery-status {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+
+  padding: 6px 14px;
+
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+
+  color: #ffffff;
+
+  pointer-events: none;
+}
+
+.offer-gallery-status.is-sold {
+  background: var(--berry);
+}
+
+.offer-gallery-status.is-inactive {
+  background: #5d6664;
+}
+
+/* =========================
+   MINIATURY
+   ========================= */
+
+.offer-gallery-thumbs {
+  position: relative;
+
+  display: flex;
+  gap: 10px;
+
+  margin-top: 12px;
+  padding: 3px 3px 6px;
+
+  overflow-x: auto;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.offer-gallery-thumb {
+  flex: 0 0 96px;
+
+  height: 72px;
 
   padding: 0;
 
-  border: none;
-  border-radius: 50%;
+  overflow: hidden;
 
-  background: rgba(255, 253, 247, 0.6);
+  border: 2px solid transparent;
+  border-radius: 9px;
+
+  background: var(--paper-deep);
 
   cursor: pointer;
 
-  box-shadow: 0 1px 4px rgba(28, 35, 33, 0.35);
+  opacity: 0.7;
 
   transition:
-    background-color 0.2s ease,
-    transform 0.2s ease;
+    opacity 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.offer-gallery-dot.is-active {
-  background: var(--amber);
+.offer-gallery-thumb img {
+  display: block;
 
-  transform: scale(1.25);
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
 }
+
+.offer-gallery-thumb:hover {
+  opacity: 1;
+}
+
+.offer-gallery-thumb.is-active {
+  border-color: var(--teal);
+
+  opacity: 1;
+}
+
+.offer-gallery-thumb:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 1px;
+}
+
+/* =========================
+   BRAK ZDJĘĆ
+   ========================= */
 
 .offer-details-no-image {
-  min-height: 520px;
+  position: relative;
 
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
 
-  flex-direction: column;
+  aspect-ratio: 4 / 3;
 
-  gap: 10px;
+  border-radius: 10px;
+
+  background:
+    repeating-linear-gradient(
+      115deg,
+      rgba(14, 92, 83, 0.05) 0 26px,
+      transparent 26px 52px
+    ),
+    var(--paper-deep);
 
   color: var(--ink-soft);
 }
 
-.offer-details-no-image span {
-  font-size: 70px;
+.offer-details-no-image svg {
+  width: 64px;
+  height: 64px;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  opacity: 0.7;
 }
 
 .offer-details-no-image p {
   margin: 0;
+
+  font-size: 15px;
 }
 
 /* =========================
-   PRAWA STRONA
+   KARTA PODSUMOWANIA
    ========================= */
 
-.offer-details-content {
-  padding: 42px;
+.od-summary-card {
+  padding: 28px;
 }
 
-/* =========================
-   KATEGORIA / TYP
-   ========================= */
-
-.offer-details-topline {
+.od-badges {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
-
-  gap: 15px;
-
-  margin-bottom: 15px;
+  gap: 10px;
 }
 
-.offer-details-category {
+.od-badge {
+  padding: 4px 12px;
+
+  border-radius: 999px;
+
+  background: var(--paper-deep);
+  color: var(--ink);
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.od-badge-sale {
+  background: #dfeee9;
+  color: var(--teal-dark);
+}
+
+.od-badge-service {
+  background: #f7e6c4;
+  color: #6f4c0c;
+}
+
+.od-badge-job {
+  background: #dcebf3;
+  color: #1f4f6b;
+}
+
+.od-category {
   color: var(--teal);
 
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.offer-details-type {
-  color: var(--ink-soft);
+.od-status-notice {
+  margin: 16px 0 0;
+  padding: 10px 14px;
+
+  border-radius: 8px;
 
   font-size: 14px;
+  font-weight: 600;
 }
 
-/* =========================
-   TYTUŁ
-   ========================= */
-
-.offer-details-content h1 {
-  margin: 0 0 15px;
-
-  font-size: 42px;
-  line-height: 1.08;
+.od-status-notice.is-sold {
+  background: #f6e3e0;
+  color: #7d2a21;
 }
 
-/* =========================
-   CENA
-   ========================= */
+.od-status-notice.is-inactive {
+  background: #ebeeed;
+  color: #3f4846;
+}
 
-.offer-details-price {
+.od-summary-card h1 {
+  margin: 16px 0 20px;
+
+  font-size: 34px;
+  line-height: 1.15;
+
+  overflow-wrap: anywhere;
+}
+
+.od-price-block {
   margin-bottom: 22px;
+}
 
-  font-family: "Zilla Slab", serif;
+.od-price-label {
+  display: block;
 
-  font-size: 32px;
+  margin-bottom: 2px;
+
+  color: var(--ink-soft);
+
+  font-size: 13px;
+}
+
+.od-price {
+  font-family: "Zilla Slab", Georgia, serif;
+  font-size: 44px;
   font-weight: 700;
+  line-height: 1.1;
+
+  color: var(--ink);
+}
+
+.od-price.is-negotiable {
+  font-size: 26px;
+
+  color: var(--ink-soft);
+}
+
+.od-meta {
+  display: grid;
+  gap: 12px;
+
+  margin: 0 0 24px;
+  padding: 0 0 24px;
+
+  list-style: none;
+
+  border-bottom: 1px solid var(--line);
+}
+
+.od-meta li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  color: var(--ink-soft);
+
+  font-size: 15px;
+}
+
+.od-meta svg {
+  flex-shrink: 0;
+
+  width: 21px;
+  height: 21px;
+
+  fill: none;
+  stroke: var(--teal);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* =========================
@@ -284,12 +592,12 @@
 
   width: 100%;
 
-  margin: 0 0 28px;
+  margin: 0;
 
-  padding: 15px 20px;
+  padding: 16px 20px;
 
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
 
   background: var(--teal-dark);
 
@@ -304,20 +612,30 @@
 
   cursor: pointer;
 
+  box-shadow: 0 8px 18px rgba(9, 63, 56, 0.22);
+
   transition:
     background-color 0.2s ease,
     opacity 0.2s ease,
-    transform 0.15s ease;
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
 }
 
 .send-message-button:hover {
   background: var(--teal);
 
   transform: translateY(-1px);
+
+  box-shadow: 0 12px 22px rgba(9, 63, 56, 0.26);
 }
 
 .send-message-button:active {
   transform: translateY(0);
+}
+
+.send-message-button:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 2px;
 }
 
 .send-message-button:disabled {
@@ -328,69 +646,201 @@
   transform: none;
 }
 
+.od-login-hint {
+  margin: 0;
+
+  color: var(--ink-soft);
+
+  font-size: 14.5px;
+  text-align: center;
+}
+
+.od-login-hint[hidden] {
+  display: none;
+}
+
+.od-login-hint a {
+  color: var(--teal);
+
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+.od-login-hint a:hover {
+  text-decoration: underline;
+}
+
 /* =========================
-   INFORMACJE
+   SPRZEDAJĄCY
    ========================= */
 
-.offer-details-info-grid {
-  display: grid;
+.od-seller-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 
-  grid-template-columns: 1fr 1fr;
-
-  gap: 14px;
-
-  margin-bottom: 34px;
+  padding: 20px 24px;
 }
 
-.offer-details-info-grid div {
-  padding: 15px;
+.od-seller-avatar {
+  flex: 0 0 54px;
 
-  border-radius: 8px;
+  width: 54px;
+  height: 54px;
 
-  background: var(--paper-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: var(--teal-dark);
+  color: #ffffff;
+
+  font-family: "Zilla Slab", Georgia, serif;
+  font-size: 26px;
+  font-weight: 700;
 }
 
-.offer-details-info-grid span,
-.offer-details-info-grid strong {
+.od-seller-info {
+  min-width: 0;
+}
+
+.od-seller-info strong,
+.od-seller-info span {
   display: block;
 }
 
-.offer-details-info-grid span {
-  margin-bottom: 5px;
+.od-seller-info strong {
+  overflow: hidden;
 
-  color: var(--ink-soft);
+  font-size: 17px;
 
-  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.offer-details-info-grid strong {
-  color: var(--ink);
+.od-seller-info span {
+  color: var(--ink-soft);
+
+  font-size: 13.5px;
 }
 
 /* =========================
-   OPIS
+   BEZPIECZEŃSTWO
    ========================= */
 
-.offer-details-description {
-  border-top: 1px solid var(--line);
+.od-safety {
+  padding: 18px 22px;
 
-  padding-top: 25px;
+  border: 1px solid rgba(14, 92, 83, 0.2);
+  border-radius: 16px;
+
+  background: rgba(14, 92, 83, 0.06);
 }
 
-.offer-details-description h2 {
-  margin-bottom: 10px;
+.od-safety h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
-  font-size: 22px;
+  margin: 0 0 10px;
+
+  color: var(--teal-dark);
+
+  font-family: "Work Sans", Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
-.offer-details-description p {
+.od-safety h2 svg {
+  width: 20px;
+  height: 20px;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.od-safety ul {
+  margin: 0;
+  padding-left: 20px;
+
+  color: var(--ink-soft);
+
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.od-safety li + li {
+  margin-top: 4px;
+}
+
+/* =========================
+   OPIS I SZCZEGÓŁY
+   ========================= */
+
+.od-description,
+.od-details {
+  padding: 30px 34px;
+}
+
+.od-description h2,
+.od-details h2 {
+  margin: 0 0 16px;
+
+  font-size: 25px;
+}
+
+.od-description p {
+  max-width: 72ch;
+
   margin: 0;
 
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 
-  line-height: 1.7;
+  color: #2e3633;
+
+  font-size: 16.5px;
+  line-height: 1.75;
+}
+
+.od-details-list {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+  column-gap: 44px;
+
+  margin: 0;
+}
+
+.od-details-list > div {
+  padding: 14px 0;
+
+  border-top: 1px solid var(--line);
+}
+
+.od-details-list dt {
+  margin-bottom: 3px;
 
   color: var(--ink-soft);
+
+  font-size: 13px;
+}
+
+.od-details-list dd {
+  margin: 0;
+
+  color: var(--ink);
+
+  font-weight: 600;
+
+  overflow-wrap: anywhere;
 }
 
 /* =========================
@@ -399,52 +849,99 @@
 
 .offer-details-loading,
 .offer-details-error {
-  padding: 60px 25px;
+  padding: 70px 25px;
 
   text-align: center;
+
+  color: var(--ink-soft);
 
   background: var(--white);
 
   border: 1px solid var(--line);
 
-  border-radius: 12px;
+  border-radius: 16px;
 }
 
 /* =========================
    RESPONSIVE
    ========================= */
 
-@media (max-width: 800px) {
+@media (max-width: 1000px) {
+  .od-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "gallery"
+      "summary"
+      "content";
+  }
+
+  .od-summary {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
   .offer-details-page {
-    padding: 35px 14px 60px;
+    padding: 22px 0 64px;
   }
 
-  .offer-details-card {
+  .od-gallery-card {
+    padding: 10px;
+
+    border-radius: 14px;
+  }
+
+  .od-summary-card {
+    padding: 22px 20px;
+  }
+
+  .od-summary-card h1 {
+    font-size: 28px;
+  }
+
+  .od-price {
+    font-size: 38px;
+  }
+
+  .od-description,
+  .od-details {
+    padding: 24px 20px;
+  }
+
+  .od-details-list {
     grid-template-columns: 1fr;
   }
 
-  .offer-details-media,
-  .offer-gallery,
+  .offer-gallery-arrow {
+    width: 38px;
+    height: 38px;
+
+    font-size: 26px;
+  }
+
+  .offer-gallery-prev {
+    left: 8px;
+  }
+
+  .offer-gallery-next {
+    right: 8px;
+  }
+
+  .offer-gallery-thumb {
+    flex-basis: 76px;
+
+    height: 58px;
+  }
+
+  .offer-gallery-hint {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
   .offer-gallery-track,
-  .offer-gallery-slide,
-  .offer-details-no-image {
-    min-height: 330px;
-  }
-
-  .offer-details-content {
-    padding: 28px 22px;
-  }
-
-  .offer-details-content h1 {
-    font-size: 34px;
-  }
-
-  .offer-details-info-grid {
-    grid-template-columns: 1fr;
-  }
-
   .send-message-button {
-    margin-bottom: 24px;
+    transition: none;
   }
 }
 
