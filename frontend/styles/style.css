@@ -576,29 +576,57 @@ h3 {
 .hero {
   position: relative;
 
-  background: var(--teal);
   color: var(--white);
 
   padding: 90px 0 130px;
 
   overflow: hidden;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(8, 66, 60, 0.88) 0%,
+      rgba(8, 66, 60, 0.45) 45%,
+      rgba(8, 66, 60, 0) 70%
+    ),
+    url("../images/hero.svg") center / cover no-repeat,
+    var(--teal);
 }
 
+/* Usuwamy stare ukośne paski, bo ilustracja ma własne tło */
 .hero::before {
-  content: "";
+  display: none;
+}
 
-  position: absolute;
-  inset: 0;
+.hero-stats {
+  background: rgba(8, 66, 60, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
 
-  background-image: repeating-linear-gradient(
-    115deg,
-    rgba(255, 255, 255, 0.06) 0px,
-    rgba(255, 255, 255, 0.06) 26px,
-    transparent 26px,
-    transparent 52px
-  );
+@media (max-width: 900px) {
+  .hero {
+    background: var(--teal);
+  }
 
-  pointer-events: none;
+  .hero::before {
+    display: block;
+
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background-image: repeating-linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0.06) 0px,
+      rgba(255, 255, 255, 0.06) 26px,
+      transparent 26px,
+      transparent 52px
+    );
+
+    pointer-events: none;
+  }
 }
 
 .hero-content {
@@ -1499,14 +1527,12 @@ h3 {
 
 .account-dropdown {
   position: absolute;
-
   top: calc(100% + 10px);
-  right: 0;
+  left: 50%;
 
-  width: 280px;
+  width: 340px;
 
   background: #ffffff;
-
   border-radius: 6px;
 
   box-shadow:
@@ -1518,7 +1544,7 @@ h3 {
   opacity: 0;
   visibility: hidden;
 
-  transform: translateY(-8px);
+  transform: translateX(-50%) translateY(-8px);
 
   transition:
     opacity 0.18s ease,
@@ -1543,8 +1569,7 @@ h3 {
 #auth-user:hover .account-dropdown {
   opacity: 1;
   visibility: visible;
-
-  transform: translateY(0);
+  transform: translateX(-50%) translateY(0);
 }
 
 /* =========================================================
