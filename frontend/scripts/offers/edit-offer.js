@@ -89,7 +89,7 @@ async function updateOffer(event) {
   const categoryId = document.getElementById("category").value;
   const priceInput = document.getElementById("price").value.trim();
   const location = document.getElementById("location")?.value.trim() || null;
-  const imageFile = document.getElementById("image")?.files?.[0] || null;
+  const imageFiles = Array.from(document.getElementById("image")?.files || []);
   const button = document.getElementById("edit-offer-submit");
 
   if (!title || !description || !type || !status || !categoryId) {
@@ -136,7 +136,9 @@ async function updateOffer(event) {
       throw new Error(data?.message || data?.error || "Nie udało się zapisać zmian.");
     }
 
-    if (imageFile) {
+    let failedImages = 0;
+
+    for (const imageFile of imageFiles) {
       const formData = new FormData();
       formData.append("file", imageFile);
       const imageResponse = await fetch(
@@ -144,9 +146,12 @@ async function updateOffer(event) {
         { method: "POST", credentials: "include", body: formData }
       );
       if (!imageResponse.ok) {
-        const imageData = await readEditResponse(imageResponse);
-        throw new Error(imageData?.message || imageData?.error || "Zmiany zapisano, ale nie udało się dodać zdjęcia.");
+        failedImages += 1;
       }
+    }
+
+    if (failedImages > 0) {
+      throw new Error(`Zmiany zapisano, ale nie udało się dodać zdjęć: ${failedImages} z ${imageFiles.length}.`);
     }
 
     showEditOfferMessage("Zmiany zostały zapisane.", false);

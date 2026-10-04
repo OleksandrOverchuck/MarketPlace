@@ -1,5 +1,13 @@
 const POST_AD_API_BASE_URL = "http://localhost:8080";
 
+const POST_AD_MAX_IMAGES = 10;
+const POST_AD_MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+const POST_AD_ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg"];
+
+// Wszystkie wybrane zdjęcia. Kolejne wybory z okna plików dokładają się
+// do listy, a nie zastępują poprzednich.
+let selectedImages = [];
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("post-ad-form");
 
@@ -15,6 +23,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("description")
     ?.addEventListener("input", updateCounters);
+
+  document
+    .getElementById("image")
+    ?.addEventListener("change", handleImagesSelected);
 
   form.addEventListener("submit", handleCreateOffer);
 
@@ -92,20 +104,6 @@ async function handleCreateOffer(event) {
   const categoryId = document.getElementById("category").value;
   const priceInput = document.getElementById("price").value.trim();
   const location = document.getElementById("location")?.value.trim() || null;
-  const imageFile = document.getElementById("image")?.files?.[0] || null;
-  if (imageFile) {
-    const allowedTypes = ["image/png", "image/jpeg"];
-
-    if (!allowedTypes.includes(imageFile.type)) {
-      showPostAdMessage("Dozwolone są tylko zdjęcia PNG i JPG.", true);
-      return;
-    }
-
-    if (imageFile.size > 10 * 1024 * 1024) {
-      showPostAdMessage("Zdjęcie nie może być większe niż 10 MB.", true);
-      return;
-    }
-  }
   const submitButton = document.getElementById("post-ad-submit");
 
   if (!title) {
@@ -178,28 +176,19 @@ async function handleCreateOffer(event) {
       );
     }
 
-    if (imageFile) {
-      const formData = new FormData();
-      formData.append("file", imageFile);
+    if (selectedImages.length > 0) {
+      const failedImages = await uploadOfferImages(data.id, selectedImages);
 
-      const imageResponse = await fetch(
-        `${POST_AD_API_BASE_URL}/api/offers/${encodeURIComponent(data.id)}/images`,
-        {
-          method: "POST",
-          credentials: "include",
-          body: formData,
-        },
-      );
-
-      if (!imageResponse.ok) {
-        const imageData = await readJsonResponse(imageResponse);
+      if (failedImages.length > 0) {
         showPostAdMessage(
-          `Ogłoszenie zostało dodane, ale zdjęcia nie udało się przesłać. ${imageData?.message || imageData?.error || ""}`.trim(),
+          `Ogłoszenie zostało dodane, ale nie udało się przesłać zdjęć: ${failedImages.length} z ${selectedImages.length}. Możesz dodać je później w edycji ogłoszenia.`,
           true,
         );
       } else {
         showPostAdMessage(
-          "Ogłoszenie i zdjęcie zostały dodane. Za chwilę przejdziesz do listy ogłoszeń.",
+          selectedImages.length === 1
+            ? "Ogłoszenie i zdjęcie zostały dodane. Za chwilę przejdziesz do listy ogłoszeń."
+            : "Ogłoszenie i zdjęcia zostały dodane. Za chwilę przejdziesz do listy ogłoszeń.",
           false,
         );
       }
@@ -218,6 +207,149 @@ async function handleCreateOffer(event) {
     showPostAdMessage(error.message, true);
     submitButton.disabled = false;
   }
+}
+
+// Wysyła zdjęcia po kolei (backend przyjmuje jedno zdjęcie na żądanie,
+// więc każde z nich ma osobny limit 10 MB). Zwraca listę nieudanych.
+async function uploadOfferImages(offerId, files) {
+  const failed = [];
+
+  for (const file of files) {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(
+        `${POST_AD_API_BASE_URL}/api/offers/${encodeURIComponent(offerId)}/images`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        },
+      );
+
+      if (!response.ok) {
+        failed.push(file);
+      }
+    } catch (error) {
+      console.error("Błąd wysyłania zdjęcia:", error);
+      failed.push(file);
+    }
+  }
+
+  return failed;
+}
+
+function handleImagesSelected(event) {
+  const input = event.target;
+  const files = Array.from(input.files || []);
+  const errors = [];
+
+  files.forEach((file) => {
+    if (!POST_AD_ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      errors.push(`„${file.name}” – dozwolone są tylko PNG i JPG.`);
+      return;
+    }
+
+    if (file.size > POST_AD_MAX_IMAGE_SIZE) {
+      errors.push(`„${file.name}” – plik jest większy niż 10 MB.`);
+      return;
+    }
+
+    const isDuplicate = selectedImages.some(
+      (image) =>
+        image.name === file.name &&
+        image.size === file.size &&
+        image.lastModified === file.lastModified,
+    );
+
+    if (isDuplicate) {
+      return;
+    }
+
+    if (selectedImages.length >= POST_AD_MAX_IMAGES) {
+      errors.push(
+        `Możesz dodać maksymalnie ${POST_AD_MAX_IMAGES} zdjęć.`,
+      );
+      return;
+    }
+
+    selectedImages.push(file);
+  });
+
+  // Czyścimy input, żeby można było wybrać ten sam plik ponownie
+  // (np. po usunięciu) i dokładać kolejne zdjęcia.
+  input.value = "";
+
+  renderImagePreviews();
+
+  if (errors.length > 0) {
+    showPostAdMessage([...new Set(errors)].join(" "), true);
+  } else {
+    showPostAdMessage("", false);
+  }
+}
+
+function removeSelectedImage(index) {
+  selectedImages.splice(index, 1);
+  renderImagePreviews();
+  showPostAdMessage("", false);
+}
+
+function moveSelectedImageToFront(index) {
+  const [image] = selectedImages.splice(index, 1);
+  selectedImages.unshift(image);
+  renderImagePreviews();
+}
+
+function renderImagePreviews() {
+  const container = document.getElementById("image-previews");
+
+  if (!container) {
+    return;
+  }
+
+  container.querySelectorAll("img").forEach((img) => {
+    URL.revokeObjectURL(img.src);
+  });
+
+  container.innerHTML = "";
+
+  selectedImages.forEach((file, index) => {
+    const item = document.createElement("div");
+    item.className = "image-preview-item";
+
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    img.alt = file.name;
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "image-preview-remove";
+    removeButton.setAttribute("aria-label", `Usuń zdjęcie ${file.name}`);
+    removeButton.textContent = "×";
+    removeButton.addEventListener("click", () => removeSelectedImage(index));
+
+    item.append(img, removeButton);
+
+    if (index === 0) {
+      const badge = document.createElement("span");
+      badge.className = "image-preview-badge";
+      badge.textContent = "Główne";
+      item.appendChild(badge);
+    } else {
+      const mainButton = document.createElement("button");
+      mainButton.type = "button";
+      mainButton.className = "image-preview-main";
+      mainButton.textContent = "Ustaw jako główne";
+      mainButton.addEventListener("click", () =>
+        moveSelectedImageToFront(index),
+      );
+      item.appendChild(mainButton);
+    }
+
+    container.appendChild(item);
+  });
 }
 
 function updateCounters() {

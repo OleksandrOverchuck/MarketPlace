@@ -184,17 +184,24 @@
                 >
               </div>
 
-              <div class="post-ad-field">
-                <label for="image">Zdjęcie</label>
+              <div class="post-ad-field post-ad-field-full">
+                <label for="image">Zdjęcia</label>
                 <input
                   id="image"
                   name="image"
                   type="file"
                   accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                  multiple
                 />
                 <span class="post-ad-help">
-                  Opcjonalne. PNG lub JPG. Maksymalnie 10 MB.
+                  Opcjonalne. Do 10 zdjęć, PNG lub JPG, maksymalnie 10 MB
+                  każde. Pierwsze zdjęcie będzie zdjęciem głównym.
                 </span>
+                <div
+                  id="image-previews"
+                  class="image-previews"
+                  aria-live="polite"
+                ></div>
               </div>
 
               <div class="post-ad-field post-ad-field-full">
