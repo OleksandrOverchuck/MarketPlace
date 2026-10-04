@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="../styles/style.css" />
     <link rel="stylesheet" href="../styles/post-ad.css" />
     <link rel="stylesheet" href="../styles/edit-offer.css" />
+    <link rel="stylesheet" href="../styles/location-picker.css" />
   </head>
   <body>
     <header class="navbar">
@@ -81,7 +82,7 @@
 
               <div class="post-ad-field">
                 <label for="location">Lokalizacja</label>
-                <input id="location" type="text" maxlength="150" placeholder="Np. Opole" />
+                <input id="location" data-location-picker type="text" maxlength="150" placeholder="Np. Opole" />
                 <span class="post-ad-help">Miasto lub dokładniejsza lokalizacja.</span>
               </div>
 
@@ -132,6 +133,8 @@
     </main>
 
     <script src="../scripts/animation/menuToggle.js"></script>
+    <script src="../scripts/location/maps-config.js"></script>
+    <script src="../scripts/location/location-picker.js"></script>
     <script src="../scripts/auth/auth.js"></script>
     <script src="../scripts/offers/edit-offer.js"></script>
   </body>
