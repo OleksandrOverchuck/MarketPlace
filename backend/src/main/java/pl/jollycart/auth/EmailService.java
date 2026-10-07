@@ -45,4 +45,56 @@ public class EmailService {
             );
         }
     }
+
+    public void sendNewMessageNotification(
+            String to,
+            String recipientNickname,
+            String senderNickname,
+            String text,
+            String attachmentName,
+            String chatUrl
+    ) {
+        StringBuilder body = new StringBuilder();
+
+        body.append("Cześć ").append(recipientNickname).append("!\n\n");
+        body.append(senderNickname)
+                .append(" wysłał(a) do Ciebie wiadomość w JollyCart:\n\n");
+
+        if (text != null && !text.isBlank()) {
+            String preview = text.length() > 500
+                    ? text.substring(0, 500) + "..."
+                    : text;
+
+            body.append("\"").append(preview).append("\"\n");
+        }
+
+        if (attachmentName != null && !attachmentName.isBlank()) {
+            body.append("Załącznik: ").append(attachmentName).append("\n");
+        }
+
+        body.append("\nOdpowiedz w czacie: ").append(chatUrl).append("\n\n");
+        body.append("Aby nie zasypywać Twojej skrzynki, kolejne wiadomości ")
+                .append("z tej rozmowy w ciągu kilku minut nie będą ")
+                .append("powodować nowych maili.");
+
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setFrom(from);
+        message.setTo(to);
+        // usuwamy znaki nowej linii - ochrona przed wstrzyknięciem nagłówków
+        message.setSubject(
+                "JollyCart - nowa wiadomość od "
+                        + senderNickname.replaceAll("[\\r\\n]", " ")
+        );
+        message.setText(body.toString());
+
+        try {
+            mailSender.send(message);
+        } catch (MailException e) {
+            throw new EmailSendException(
+                    "Nie udało się wysłać wiadomości e-mail.",
+                    e
+            );
+        }
+    }
 }
