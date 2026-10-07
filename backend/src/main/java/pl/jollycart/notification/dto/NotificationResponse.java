@@ -22,6 +22,17 @@ public record NotificationResponse(
             Notification notification
     ) {
 
+        String content = notification.getMessage().getContent();
+
+        if ((content == null || content.isBlank())
+                && notification.getMessage().getAttachment() != null) {
+
+            content = "\uD83D\uDCCE "
+                    + notification.getMessage()
+                            .getAttachment()
+                            .getOriginalFileName();
+        }
+
         return new NotificationResponse(
                 notification.getId(),
                 notification.getType(),
@@ -31,7 +42,7 @@ public record NotificationResponse(
                 notification.getSender().getId(),
                 notification.getSender().getNickname(),
                 notification.getSender().getAvatarUrl(),
-                notification.getMessage().getContent(),
+                content,
                 notification.getCreatedAt()
         );
     }

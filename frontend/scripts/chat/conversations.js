@@ -257,7 +257,7 @@ function cvRenderRow(item) {
   if (lastMessage) {
     const mineMessage = Number(lastMessage.senderId) === Number(cvMe.id);
 
-    preview = `<span class="cv-preview">${mineMessage ? "Ty: " : ""}${cvEscape(lastMessage.content || "")}</span>`;
+    preview = `<span class="cv-preview">${mineMessage ? "Ty: " : ""}${cvEscape(lastMessage.content || (lastMessage.attachment ? "📎 " + lastMessage.attachment.fileName : ""))}</span>`;
   }
 
   let href = `chat.html?conversationId=${encodeURIComponent(conversation.id)}&from=conversations`;

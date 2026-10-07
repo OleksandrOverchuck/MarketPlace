@@ -17,6 +17,8 @@ body {
 }
 
 .chat-page {
+  position: relative;
+
   width: 100%;
   max-width: 900px;
 
@@ -223,6 +225,8 @@ body {
   flex-shrink: 0;
 
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
 
   gap: 10px;
 
@@ -276,6 +280,222 @@ body {
   cursor: not-allowed;
 }
 
+/* =====================================================
+   ZAŁĄCZNIKI
+   ===================================================== */
+
+.message-form input[type="file"] {
+  display: none;
+}
+
+.message-form .attach-button {
+  flex-shrink: 0;
+
+  width: 44px;
+  height: 44px;
+
+  padding: 0;
+
+  border: 1px solid #cccccc;
+
+  background: #ffffff;
+
+  font-size: 20px;
+  line-height: 1;
+}
+
+.message-form .attach-button:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.attachment-preview {
+  flex: 0 0 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 8px 10px;
+
+  border: 1px solid #dddddd;
+
+  border-radius: 10px;
+
+  background: #f7f7f7;
+
+  font-size: 13px;
+}
+
+.attachment-preview[hidden] {
+  display: none;
+}
+
+.attachment-preview-name {
+  flex: 1;
+
+  min-width: 0;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+
+  font-weight: 600;
+}
+
+.attachment-preview-size {
+  flex-shrink: 0;
+
+  color: #777777;
+}
+
+.message-form .attachment-remove {
+  flex-shrink: 0;
+
+  width: 26px;
+  height: 26px;
+
+  padding: 0;
+
+  border-radius: 50%;
+
+  background: #e5e7eb;
+
+  color: #111111;
+
+  font-size: 16px;
+  line-height: 1;
+}
+
+.drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(17, 17, 17, 0.55);
+}
+
+.drop-overlay[hidden] {
+  display: none;
+}
+
+.drop-overlay-box {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+
+  padding: 28px 36px;
+
+  border: 2px dashed #ffffff;
+
+  border-radius: 16px;
+
+  color: #ffffff;
+
+  text-align: center;
+
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.drop-overlay-box span {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.message-text {
+  white-space: pre-wrap;
+}
+
+.message-attachment + .message-text {
+  margin-top: 8px;
+}
+
+.attachment-image {
+  display: block;
+
+  max-width: 100%;
+  max-height: 260px;
+
+  min-width: 120px;
+  min-height: 60px;
+
+  border-radius: 10px;
+
+  background: rgba(127, 127, 127, 0.2);
+
+  object-fit: cover;
+
+  cursor: pointer;
+}
+
+.message-form .attachment-file,
+.attachment-file {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  width: 100%;
+  min-width: 200px;
+
+  padding: 8px 10px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: rgba(127, 127, 127, 0.18);
+
+  color: inherit;
+
+  font: inherit;
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.attachment-file:hover {
+  background: rgba(127, 127, 127, 0.28);
+}
+
+.attachment-file-icon {
+  flex-shrink: 0;
+
+  font-size: 24px;
+}
+
+.attachment-file-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.attachment-file-name {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.attachment-file-size {
+  font-size: 12px;
+
+  opacity: 0.7;
+}
+
 @media (max-width: 600px) {
   .chat-header {
     padding: 10px 12px;
@@ -295,5 +515,13 @@ body {
 
   .message-form button {
     padding: 12px 14px;
+  }
+
+  .message-form .attach-button {
+    padding: 0;
+  }
+
+  .message-form .attachment-remove {
+    padding: 0;
   }
 }
