@@ -2,7 +2,6 @@ const INDEX_OFFERS_API_BASE_URL = "http://localhost:8080";
 
 let indexCategories = [];
 
-
 document.addEventListener("DOMContentLoaded", async () => {
   setupOfferSearch();
   await loadCategories();
@@ -14,9 +13,12 @@ async function loadCategories() {
   const categoryCards = document.querySelectorAll("[data-category-name]");
 
   try {
-    const response = await fetch(`${INDEX_OFFERS_API_BASE_URL}/api/categories`, {
-      method: "GET",
-    });
+    const response = await fetch(
+      `${INDEX_OFFERS_API_BASE_URL}/api/categories`,
+      {
+        method: "GET",
+      },
+    );
 
     if (!response.ok) {
       throw new Error("Nie udało się pobrać kategorii.");
@@ -163,26 +165,42 @@ async function searchPublicOffers(
 }
 
 async function renderPublicOffer(offer) {
-  const price =
-    offer.price == null
-      ? "Cena do uzgodnienia"
-      : `${formatPublicPrice(offer.price)} zł`;
+  const hasPrice = offer.price != null;
+  const price = hasPrice
+    ? `${formatPublicPrice(offer.price)} zł`
+    : "Cena do uzgodnienia";
   const type = getPublicTypeLabel(offer.type);
+  const seller = offer.nickname || "Użytkownik";
   const imageUrl = await getFirstOfferImageUrl(offer.id);
   const imageHtml = imageUrl
     ? `<img src="${escapeIndexHtml(imageUrl)}" alt="${escapeIndexHtml(offer.title)}" loading="lazy">`
-    : `<span aria-hidden="true">${getOfferIcon(offer.type)}</span>`;
+    : `<span class="offer-card-icon" aria-hidden="true">${getOfferIcon(offer.type)}</span>`;
+
+  const pinIcon = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"></path>
+      <circle cx="12" cy="9.5" r="2.5"></circle>
+    </svg>`;
 
   return `
     <a class="offer-card" href="offer-details.html?id=${encodeURIComponent(offer.id)}">
-      <div class="offer-card-image">${imageHtml}</div>
+      <div class="offer-card-image">
+        ${imageHtml}
+        <span class="offer-type-badge">${escapeIndexHtml(type)}</span>
+      </div>
       <div class="offer-content">
         <span class="offer-category">${escapeIndexHtml(offer.categoryName || "Bez kategorii")}</span>
         <h3>${escapeIndexHtml(offer.title)}</h3>
-        <span class="price">${escapeIndexHtml(price)}</span>
-        <p class="location">${escapeIndexHtml(offer.location || "Lokalizacja nie podana")}</p>
-        <p class="date">${escapeIndexHtml(type)} · Dodano: ${formatPublicDate(offer.createdAt)}</p>
-        <p class="offer-author">Sprzedający: ${escapeIndexHtml(offer.nickname || "Użytkownik")}</p>
+        <span class="price${hasPrice ? "" : " is-negotiable"}">${escapeIndexHtml(price)}</span>
+        <div class="offer-meta">
+          <span class="location">${pinIcon}<span>${escapeIndexHtml(offer.location || "Lokalizacja nie podana")}</span></span>
+          <span class="date">${formatPublicDate(offer.createdAt)}</span>
+        </div>
+        <div class="offer-author">
+          <span class="offer-author-avatar" aria-hidden="true">${escapeIndexHtml(seller.trim().charAt(0) || "U")}</span>
+          <span class="offer-author-name">${escapeIndexHtml(seller)}</span>
+        </div>
       </div>
     </a>
   `;
@@ -207,7 +225,11 @@ function getOfferIcon(type) {
 }
 
 function getPublicTypeLabel(type) {
-  return { SALE: "Sprzedaż", SERVICE: "Usługa", JOB: "Oferta pracy" }[type] || type || "Ogłoszenie";
+  return (
+    { SALE: "Sprzedaż", SERVICE: "Usługa", JOB: "Oferta pracy" }[type] ||
+    type ||
+    "Ogłoszenie"
+  );
 }
 
 function formatPublicPrice(value) {

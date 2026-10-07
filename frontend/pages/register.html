@@ -91,7 +91,7 @@
 
           <div class="oauth-divider">lub</div>
 
-          <form class="auth-form">
+          <form class="auth-form" id="register-form">
             <div class="form-group">
               <label for="username">Nazwa użytkownika</label>
               <input
@@ -133,6 +133,41 @@
             </div>
 
             <button type="submit" class="auth-btn">Zarejestruj się</button>
+          </form>
+
+          <!-- Krok 2: kod z maila (pokazywany po udanym kroku 1) -->
+          <form class="auth-form" id="verify-form" hidden>
+            <p class="verify-info">
+              Wysłaliśmy kod weryfikacyjny na adres
+              <strong id="verify-email-label"></strong>.
+              Wpisz go poniżej, aby dokończyć rejestrację.
+            </p>
+
+            <div class="form-group">
+              <label for="verificationCode">Kod weryfikacyjny</label>
+              <input
+                type="text"
+                id="verificationCode"
+                class="code-input"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="8"
+                placeholder="------"
+                required
+              />
+            </div>
+
+            <button type="submit" class="auth-btn">
+              Potwierdź i utwórz konto
+            </button>
+
+            <button type="button" class="auth-secondary-btn" id="resend-code-btn">
+              Wyślij kod ponownie
+            </button>
+
+            <button type="button" class="auth-secondary-btn" id="verify-back-btn">
+              Wróć i zmień dane
+            </button>
           </form>
 
           <div class="auth-footer">

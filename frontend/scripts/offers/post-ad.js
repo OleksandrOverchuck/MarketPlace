@@ -48,10 +48,54 @@ async function checkAuthentication() {
     if (!response.ok) {
       throw new Error("Nie udało się sprawdzić sesji.");
     }
+
+    const user = await response.json();
+
+    showPhoneNote(user?.phone);
   } catch (error) {
     console.error("Błąd sprawdzania zalogowania:", error);
     window.location.href = "login.html";
   }
+}
+
+// Informacja, czy numer telefonu z profilu trafi do ogłoszenia.
+function showPhoneNote(phone) {
+  const note = document.getElementById("post-ad-phone-note");
+
+  if (!note) {
+    return;
+  }
+
+  const link = document.createElement("a");
+
+  link.href = "settings.html";
+
+  note.textContent = "";
+
+  if (phone) {
+    const formatted = /^\+48\d{9}$/.test(phone)
+      ? phone.replace(/^(\+48)(\d{3})(\d{3})(\d{3})$/, "$1 $2 $3 $4")
+      : phone;
+
+    note.append(
+      "W ogłoszeniu pokażemy Twój numer telefonu z profilu: ",
+    );
+
+    const strong = document.createElement("strong");
+    strong.textContent = formatted;
+    note.append(strong, ". ");
+
+    link.textContent = "Zmień numer w profilu";
+  } else {
+    note.append(
+      "Nie masz numeru telefonu w profilu, więc nie będzie widoczny w ogłoszeniu. ",
+    );
+
+    link.textContent = "Dodaj numer w profilu";
+  }
+
+  note.append(link);
+  note.hidden = false;
 }
 
 async function loadCategories() {

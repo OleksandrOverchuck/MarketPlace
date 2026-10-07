@@ -603,7 +603,16 @@ const DETAILS_ICONS = {
   image:
     '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>',
   zoom: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4M11 8v6M8 11h6"/></svg>',
+  phone:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>',
 };
+
+// +48123456789 -> +48 123 456 789 (pozostałe numery bez zmian)
+function formatDetailsPhone(phone) {
+  const polish = /^\+48(\d{3})(\d{3})(\d{3})$/.exec(phone);
+
+  return polish ? `+48 ${polish[1]} ${polish[2]} ${polish[3]}` : phone;
+}
 
 function renderOfferDetails(root, offer, images) {
   const hasPrice = offer.price != null;
@@ -617,6 +626,22 @@ function renderOfferDetails(root, offer, images) {
   const sellerName = offer.nickname || "Użytkownik";
   const sellerInitial = sellerName.trim().charAt(0).toUpperCase() || "U";
   const statusNotice = getDetailsStatusNotice(offer.status);
+
+  // Numer z profilu ogłaszającego - pokazujemy tylko, jeśli go podał.
+  const sellerPhone = offer.sellerPhone ? String(offer.sellerPhone).trim() : "";
+
+  const sellerPhoneHtml = sellerPhone
+    ? `
+      <a
+        class="od-seller-phone"
+        href="tel:${escapeDetailsHtml(sellerPhone.replace(/[^\d+]/g, ""))}"
+        aria-label="Zadzwoń: ${escapeDetailsHtml(formatDetailsPhone(sellerPhone))}"
+      >
+        ${DETAILS_ICONS.phone}
+        <span>${escapeDetailsHtml(formatDetailsPhone(sellerPhone))}</span>
+      </a>
+    `
+    : "";
 
   document.title = `${offer.title} – JollyCart`;
 
@@ -805,6 +830,7 @@ function renderOfferDetails(root, offer, images) {
           <div class="od-seller-info">
             <strong>${escapeDetailsHtml(sellerName)}</strong>
             <span>${escapeDetailsHtml(getDetailsSellerRole(offer.type))}</span>
+            ${sellerPhoneHtml}
           </div>
         </div>
 

@@ -1,7 +1,9 @@
 package pl.jollycart.notification;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,15 +17,20 @@ import pl.jollycart.user.UserRepository;
 @Transactional
 public class NotificationService {
 
+    private static final long EMAIL_COOLDOWN_MINUTES = 10;
+
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public NotificationService(
             NotificationRepository notificationRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     /*
@@ -42,6 +49,19 @@ public class NotificationService {
                 continue;
             }
 
+            /*
+             * Najwyżej jeden mail na rozmowę w oknie EMAIL_COOLDOWN_MINUTES -
+             * żeby żywa wymiana wiadomości nie zasypała skrzynki.
+             */
+            boolean shouldEmail =
+                    !notificationRepository
+                            .existsByRecipientIdAndConversationIdAndCreatedAtAfter(
+                                    recipient.getId(),
+                                    message.getConversation().getId(),
+                                    LocalDateTime.now()
+                                            .minusMinutes(EMAIL_COOLDOWN_MINUTES)
+                            );
+
             Notification notification = new Notification();
 
             notification.setRecipient(recipient);
@@ -52,6 +72,22 @@ public class NotificationService {
             notification.setRead(false);
 
             notificationRepository.save(notification);
+
+            if (shouldEmail) {
+                eventPublisher.publishEvent(
+                        new MessageEmailEvent(
+                                recipient.getEmail(),
+                                recipient.getNickname(),
+                                message.getSender().getNickname(),
+                                message.getConversation().getId(),
+                                message.getContent(),
+                                message.getAttachment() != null
+                                        ? message.getAttachment()
+                                                .getOriginalFileName()
+                                        : null
+                        )
+                );
+            }
         }
     }
 

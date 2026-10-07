@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import pl.jollycart.file.StoredFile;
 import pl.jollycart.user.User;
 
 @Entity
@@ -31,8 +32,16 @@ public class Message {
     @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
 
+    /*
+     * Dla wiadomości z samym plikiem zapisujemy pusty tekst (""),
+     * dzięki temu nie trzeba zmieniać istniejącej kolumny NOT NULL.
+     */
     @Column(nullable = false, length = 5000)
     private String content;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "attachment_id")
+    private StoredFile attachment;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -86,6 +95,14 @@ public class Message {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public StoredFile getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(StoredFile attachment) {
+        this.attachment = attachment;
     }
 
     public LocalDateTime getCreatedAt() {
