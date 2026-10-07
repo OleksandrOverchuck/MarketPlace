@@ -466,6 +466,16 @@ function setupBackButton() {
 
   button.addEventListener("click", () => {
     /*
+     * Czat otwarty z listy rozmów - wracamy do listy.
+     */
+
+    if (chatParams.get("from") === "conversations") {
+      window.location.href = "conversations.html";
+
+      return;
+    }
+
+    /*
      * Jeżeli czat został otwarty
      * z konkretnego ogłoszenia,
      * wracamy bezpośrednio do niego.

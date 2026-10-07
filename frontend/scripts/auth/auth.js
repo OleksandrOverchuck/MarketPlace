@@ -383,10 +383,10 @@ function displayLoggedUser(user) {
         </a>
 
         <a
-          href="chat.html"
+          href="conversations.html"
           class="account-menu-item"
         >
-          Czat
+          Rozmowy
         </a>
 
         <a
@@ -423,7 +423,56 @@ function displayLoggedUser(user) {
     logoutButton.addEventListener("click", handleLogout);
   }
 
+  setupAccountMenuToggle(authUserElement);
+
   setupNotifications();
+}
+
+/*
+   Na małych ekranach menu konta otwiera się po kliknięciu
+   (klasa .open). Na desktopie nadal działa hover - CSS reaguje
+   na .open tylko w widoku mobilnym.
+*/
+let accountMenuGlobalListenersReady = false;
+
+function setupAccountMenuToggle(authUserElement) {
+  const accountButton = authUserElement.querySelector(".account-button");
+
+  if (accountButton) {
+    accountButton.addEventListener("click", () => {
+      authUserElement.classList.toggle("open");
+    });
+  }
+
+  if (accountMenuGlobalListenersReady) {
+    return;
+  }
+
+  accountMenuGlobalListenersReady = true;
+
+  // capture = true, żeby zamykało się także gdy inny element
+  // woła stopPropagation (np. przycisk Wiadomości)
+  document.addEventListener(
+    "click",
+    (event) => {
+      const authUser = document.getElementById("auth-user");
+
+      if (authUser && !authUser.contains(event.target)) {
+        authUser.classList.remove("open");
+      }
+    },
+    true,
+  );
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      const authUser = document.getElementById("auth-user");
+
+      if (authUser) {
+        authUser.classList.remove("open");
+      }
+    }
+  });
 }
 
 function displayGuestUser() {
