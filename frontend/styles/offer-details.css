@@ -727,6 +727,51 @@
   font-size: 13.5px;
 }
 
+.od-seller-info .od-seller-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  margin-top: 6px;
+
+  color: var(--teal);
+
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.od-seller-info .od-seller-phone span {
+  display: inline;
+
+  color: inherit;
+  font-size: inherit;
+}
+
+.od-seller-phone svg {
+  flex: 0 0 auto;
+
+  width: 16px;
+  height: 16px;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.od-seller-phone:hover {
+  text-decoration: underline;
+}
+
+.od-seller-phone:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 /* =========================
    BEZPIECZEŃSTWO
    ========================= */

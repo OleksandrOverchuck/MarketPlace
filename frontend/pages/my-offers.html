@@ -41,18 +41,37 @@
     </header>
 
     <main class="my-offers-page">
-      <div class="container">
-        <div class="my-offers-heading">
+      <section class="my-offers-hero">
+        <div class="container my-offers-heading">
           <div>
-            <span class="my-offers-badge">TWOJE KONTO</span>
             <h1>Moje ogłoszenia</h1>
-            <p>Tutaj znajdziesz wyłącznie ogłoszenia dodane przez Ciebie.</p>
+            <p>Przeglądaj, edytuj i usuwaj ogłoszenia dodane z Twojego konta.</p>
           </div>
-          <a href="post-ad.html" class="my-offers-add-button">+ Dodaj ogłoszenie</a>
+        </div>
+      </section>
+
+      <div class="container my-offers-body">
+        <div id="my-offers-filters" class="my-offers-filters" role="group" aria-label="Filtruj ogłoszenia według statusu" hidden>
+          <button type="button" class="my-offers-filter is-active" data-filter="ALL" aria-pressed="true">
+            <strong data-count="ALL">0</strong>
+            <span>Wszystkie</span>
+          </button>
+          <button type="button" class="my-offers-filter" data-filter="ACTIVE" aria-pressed="false">
+            <strong data-count="ACTIVE">0</strong>
+            <span>Aktywne</span>
+          </button>
+          <button type="button" class="my-offers-filter" data-filter="INACTIVE" aria-pressed="false">
+            <strong data-count="INACTIVE">0</strong>
+            <span>Nieaktywne</span>
+          </button>
+          <button type="button" class="my-offers-filter" data-filter="SOLD" aria-pressed="false">
+            <strong data-count="SOLD">0</strong>
+            <span>Sprzedane</span>
+          </button>
         </div>
 
         <div id="my-offers-message" class="my-offers-message" aria-live="polite"></div>
-        <div id="my-offers-grid" class="my-offers-grid"></div>
+        <div id="my-offers-grid" class="my-offers-grid" aria-busy="true"></div>
       </div>
     </main>
 

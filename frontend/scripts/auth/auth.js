@@ -115,22 +115,84 @@ function handleGoogleLogin() {
 }
 
 /* =========================
-   REJESTRACJA
+   REJESTRACJA (2 kroki)
+   1) formularz  -> backend wysyła kod na email
+   2) kod z maila -> backend tworzy konto
    ========================= */
 
+let pendingRegistrationEmail = null;
+let resendTimerId = null;
+
 function setupRegisterPage() {
-  const registerForm = document.querySelector(".auth-form");
+  const registerForm = document.getElementById("register-form");
 
-  /*
-   * Rozróżniamy rejestrację od logowania
-   * po obecności pola username.
-   */
-  const usernameInput = document.getElementById("username");
-  const confirmPasswordInput = document.getElementById("confirmPassword");
-
-  if (registerForm && usernameInput && confirmPasswordInput) {
-    registerForm.addEventListener("submit", handleRegister);
+  if (!registerForm) {
+    return;
   }
+
+  registerForm.addEventListener("submit", handleRegister);
+
+  const verifyForm = document.getElementById("verify-form");
+  const resendButton = document.getElementById("resend-code-btn");
+  const backButton = document.getElementById("verify-back-btn");
+
+  if (verifyForm) {
+    verifyForm.addEventListener("submit", handleVerifyCode);
+  }
+
+  if (resendButton) {
+    resendButton.addEventListener("click", handleResendCode);
+  }
+
+  if (backButton) {
+    backButton.addEventListener("click", showRegisterStep);
+  }
+}
+
+async function postJson(path, body) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(body),
+  });
+
+  const text = await response.text();
+
+  let data = null;
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      data = null;
+    }
+  }
+
+  return { response, data, text };
+}
+
+function extractErrorMessage(result, fallback) {
+  const { response, data } = result;
+
+  if (data && typeof data === "object") {
+    if (data.message) {
+      return data.message;
+    }
+
+    // błędy walidacji: { pole: "komunikat", ... }
+    const messages = Object.values(data).filter(
+      (value) => typeof value === "string",
+    );
+
+    if (messages.length > 0) {
+      return messages.join(" ");
+    }
+  }
+
+  return `${fallback} (kod HTTP: ${response.status})`;
 }
 
 async function handleRegister(event) {
@@ -142,68 +204,185 @@ async function handleRegister(event) {
   const confirmPassword = document.getElementById("confirmPassword").value;
 
   if (!nickname || !email || !password || !confirmPassword) {
-    showAuthMessage("Wypełnij wszystkie pola.", "error");
+    showAuthMessage("Wypełnij wszystkie pola.", true);
     return;
   }
 
   if (password !== confirmPassword) {
-    showAuthMessage("Hasła nie są takie same.", "error");
+    showAuthMessage("Hasła nie są takie same.", true);
     return;
   }
 
+  const submitButton = event.target.querySelector("button[type='submit']");
+  submitButton.disabled = true;
+
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({
-        nickname: nickname,
-        email: email,
-        password: password,
-        confirmPassword: confirmPassword,
-      }),
+    const result = await postJson("/api/auth/register", {
+      nickname: nickname,
+      email: email,
+      password: password,
+      confirmPassword: confirmPassword,
     });
 
-    const text = await response.text();
-
-    let data = null;
-
-    if (text) {
-      try {
-        data = JSON.parse(text);
-      } catch (error) {
-        data = null;
-      }
+    if (!result.response.ok) {
+      showAuthMessage(
+        extractErrorMessage(result, "Rejestracja nie powiodła się"),
+        true,
+      );
+      return;
     }
 
-    if (!response.ok) {
-      const message =
-        data?.message ||
-        data?.error ||
-        text ||
-        `Rejestracja nie powiodła się. Kod HTTP: ${response.status}`;
+    pendingRegistrationEmail = result.data?.email || email;
 
-      showAuthMessage(message, "error");
+    showVerifyStep(result.data?.resendCooldownSeconds ?? 60);
+  } catch (error) {
+    console.error("Błąd rejestracji:", error);
+
+    showAuthMessage("Nie udało się połączyć z serwerem.", true);
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
+async function handleVerifyCode(event) {
+  event.preventDefault();
+
+  const code = document.getElementById("verificationCode").value.trim();
+
+  if (!pendingRegistrationEmail) {
+    showRegisterStep();
+    return;
+  }
+
+  if (!/^\d{4,8}$/.test(code)) {
+    showAuthMessage("Kod składa się wyłącznie z cyfr.", true);
+    return;
+  }
+
+  const submitButton = event.target.querySelector("button[type='submit']");
+  submitButton.disabled = true;
+
+  try {
+    const result = await postJson("/api/auth/verify-email", {
+      email: pendingRegistrationEmail,
+      code: code,
+    });
+
+    if (!result.response.ok) {
+      showAuthMessage(
+        extractErrorMessage(result, "Nie udało się potwierdzić kodu"),
+        true,
+      );
       return;
     }
 
     showAuthMessage(
       "Konto zostało utworzone. Za chwilę przejdziesz do logowania.",
-      "success",
+      false,
     );
 
     setTimeout(() => {
       window.location.href = "login.html";
-    }, 1000);
+    }, 1200);
   } catch (error) {
-    console.error("BŁĄD REJESTRACJI - pełny błąd:", error);
-    console.error("BŁĄD REJESTRACJI - message:", error.message);
-    console.error("BŁĄD REJESTRACJI - stack:", error.stack);
+    console.error("Błąd weryfikacji kodu:", error);
 
-    showAuthMessage(`Błąd: ${error.message}`, true);
+    showAuthMessage("Nie udało się połączyć z serwerem.", true);
+  } finally {
+    submitButton.disabled = false;
   }
+}
+
+async function handleResendCode() {
+  if (!pendingRegistrationEmail) {
+    showRegisterStep();
+    return;
+  }
+
+  const resendButton = document.getElementById("resend-code-btn");
+  resendButton.disabled = true;
+
+  try {
+    const result = await postJson("/api/auth/resend-code", {
+      email: pendingRegistrationEmail,
+    });
+
+    if (!result.response.ok) {
+      showAuthMessage(
+        extractErrorMessage(result, "Nie udało się wysłać kodu"),
+        true,
+      );
+
+      // np. "Odczekaj X s" - przycisk wraca po krótkiej chwili
+      startResendCooldown(5);
+      return;
+    }
+
+    showAuthMessage("Wysłaliśmy nowy kod na Twój email.", false);
+
+    startResendCooldown(result.data?.resendCooldownSeconds ?? 60);
+  } catch (error) {
+    console.error("Błąd ponownego wysyłania kodu:", error);
+
+    showAuthMessage("Nie udało się połączyć z serwerem.", true);
+
+    resendButton.disabled = false;
+  }
+}
+
+function showVerifyStep(cooldownSeconds) {
+  document.getElementById("register-form").hidden = true;
+  document.getElementById("verify-form").hidden = false;
+
+  document.getElementById("verify-email-label").textContent =
+    pendingRegistrationEmail;
+
+  const codeInput = document.getElementById("verificationCode");
+  codeInput.value = "";
+  codeInput.focus();
+
+  showAuthMessage("Kod został wysłany. Sprawdź swoją skrzynkę (także SPAM).", false);
+
+  startResendCooldown(cooldownSeconds);
+}
+
+function showRegisterStep() {
+  clearInterval(resendTimerId);
+
+  document.getElementById("verify-form").hidden = true;
+  document.getElementById("register-form").hidden = false;
+
+  const messageElement = document.querySelector(".auth-message");
+
+  if (messageElement) {
+    messageElement.textContent = "";
+  }
+}
+
+function startResendCooldown(seconds) {
+  const resendButton = document.getElementById("resend-code-btn");
+
+  clearInterval(resendTimerId);
+
+  let left = Number(seconds) || 0;
+
+  const render = () => {
+    if (left > 0) {
+      resendButton.disabled = true;
+      resendButton.textContent = `Wyślij kod ponownie (${left} s)`;
+    } else {
+      resendButton.disabled = false;
+      resendButton.textContent = "Wyślij kod ponownie";
+      clearInterval(resendTimerId);
+    }
+  };
+
+  render();
+
+  resendTimerId = setInterval(() => {
+    left -= 1;
+    render();
+  }, 1000);
 }
 
 /* =========================

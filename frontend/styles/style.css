@@ -1449,6 +1449,49 @@ h3 {
   gap: 20px;
 }
 
+.auth-form[hidden] {
+  display: none;
+}
+
+.auth-box p.verify-info {
+  margin-bottom: 0;
+  font-size: 14.5px;
+}
+
+.form-group input.code-input {
+  text-align: center;
+  font-size: 24px;
+  letter-spacing: 8px;
+  font-weight: 700;
+}
+
+.auth-secondary-btn {
+  padding: 12px;
+
+  border: 1px solid var(--line);
+  border-radius: 8px;
+
+  background: var(--white);
+  color: var(--ink);
+
+  font-family: "Work Sans", sans-serif;
+  font-size: 14.5px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: border-color 0.2s ease;
+}
+
+.auth-secondary-btn:hover:not(:disabled) {
+  border-color: var(--teal);
+}
+
+.auth-secondary-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .form-group {
   display: flex;
 

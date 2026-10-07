@@ -12,7 +12,7 @@
 
 .my-offers-hero {
   position: relative;
-  padding: 64px 0 96px;
+  padding: 56px 0 104px;
   color: var(--white);
   overflow: hidden;
   background:
@@ -28,22 +28,9 @@
 
 .my-offers-heading {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 30px;
-}
-
-.my-offers-badge {
-  display: inline-block;
-  margin-bottom: 14px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  background: rgba(255, 253, 247, 0.14);
-  border: 1px solid rgba(255, 253, 247, 0.28);
-  color: var(--white);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
 }
 
 .my-offers-heading h1 {
@@ -62,7 +49,6 @@
   line-height: 1.55;
 }
 
-.my-offers-add-button,
 .my-offers-empty-button {
   display: inline-flex;
   align-items: center;
@@ -81,7 +67,6 @@
     transform 0.2s ease;
 }
 
-.my-offers-add-button:hover,
 .my-offers-empty-button:hover {
   background: #edb85a;
   transform: translateY(-2px);
@@ -273,10 +258,8 @@
 
 .my-offer-category {
   color: var(--teal);
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
 .my-offer-card h2 {
@@ -316,6 +299,12 @@
   font-size: 22px;
   font-weight: 700;
   font-variant-numeric: lining-nums tabular-nums;
+}
+
+.my-offer-meta strong.is-negotiable {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-soft);
 }
 
 .my-offer-meta span {
@@ -437,6 +426,18 @@
   background: var(--teal);
 }
 
+.my-offers-empty--filtered {
+  padding: 48px 30px;
+}
+
+.my-offers-empty--filtered h2 {
+  font-size: 24px;
+}
+
+.my-offers-empty--filtered p {
+  margin-bottom: 0;
+}
+
 .my-offers-message.is-error {
   margin-bottom: 20px;
   padding: 14px 18px;
@@ -482,9 +483,6 @@
     align-items: flex-start;
     flex-direction: column;
   }
-  .my-offers-add-button {
-    width: 100%;
-  }
   .my-offers-grid {
     grid-template-columns: 1fr;
   }
@@ -499,8 +497,7 @@
 @media (prefers-reduced-motion: reduce) {
   .my-offer-card,
   .my-offer-media img,
-  .my-offers-filter,
-  .my-offers-add-button {
+  .my-offers-filter {
     transition: none;
   }
   .my-offer-skeleton {

@@ -27,6 +27,11 @@ public record OfferResponse(
 
         String nickname,
 
+        // Numer telefonu z profilu autora ogłoszenia (null, jeśli go nie podał).
+        // Pobierany na bieżąco, więc zmiana numeru w profilu aktualizuje
+        // wszystkie jego ogłoszenia.
+        String sellerPhone,
+
         Long categoryId,
 
         String categoryName,
@@ -48,6 +53,7 @@ public record OfferResponse(
                 offer.getStatus(),
                 offer.getUser().getId(),
                 offer.getUser().getNickname(),
+                offer.getUser().getPhone(),
                 offer.getCategory().getId(),
                 offer.getCategory().getName(),
                 offer.getCreatedAt(),
