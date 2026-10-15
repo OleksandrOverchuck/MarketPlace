@@ -70,6 +70,41 @@ public class User {
     )
     private String location;
 
+    @Enumerated(EnumType.STRING)
+    @Column(
+            nullable = false,
+            length = 20,
+            columnDefinition = "varchar(20) default 'USER'"
+    )
+    private Role role = Role.USER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(
+            nullable = false,
+            length = 20,
+            columnDefinition = "varchar(20) default 'ACTIVE'"
+    )
+    private AccountStatus status = AccountStatus.ACTIVE;
+
+    @Column(
+            name = "ban_reason",
+            length = 500
+    )
+    private String banReason;
+
+    @Column(name = "banned_at")
+    private LocalDateTime bannedAt;
+
+    @Column(name = "banned_by_id")
+    private Long bannedById;
+
+    @Column(
+            name = "password_change_required",
+            nullable = false,
+            columnDefinition = "bit(1) default 0"
+    )
+    private boolean passwordChangeRequired = false;
+
     @Column(
             name = "created_at",
             nullable = false
@@ -180,6 +215,64 @@ public class User {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+
+    public Role getRole() {
+        return role == null ? Role.USER : role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+
+    public AccountStatus getStatus() {
+        return status == null ? AccountStatus.ACTIVE : status;
+    }
+
+    public void setStatus(AccountStatus status) {
+        this.status = status;
+    }
+
+    public boolean isBanned() {
+        return getStatus() == AccountStatus.BANNED;
+    }
+
+
+    public String getBanReason() {
+        return banReason;
+    }
+
+    public void setBanReason(String banReason) {
+        this.banReason = banReason;
+    }
+
+
+    public LocalDateTime getBannedAt() {
+        return bannedAt;
+    }
+
+    public void setBannedAt(LocalDateTime bannedAt) {
+        this.bannedAt = bannedAt;
+    }
+
+
+    public Long getBannedById() {
+        return bannedById;
+    }
+
+    public void setBannedById(Long bannedById) {
+        this.bannedById = bannedById;
+    }
+
+
+    public boolean isPasswordChangeRequired() {
+        return passwordChangeRequired;
+    }
+
+    public void setPasswordChangeRequired(boolean passwordChangeRequired) {
+        this.passwordChangeRequired = passwordChangeRequired;
     }
 
 

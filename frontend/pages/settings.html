@@ -13,6 +13,7 @@
 
     <link rel="stylesheet" href="../styles/style.css" />
     <link rel="stylesheet" href="../styles/settings.css" />
+    <link rel="stylesheet" href="../styles/own-rating.css" />
     <link rel="stylesheet" href="../styles/location-picker.css" />
   </head>
 
@@ -96,24 +97,20 @@
              ========================= -->
 
         <header class="settings-hero">
-          <div class="settings-hero-avatar-wrap">
-            <div class="settings-heading-avatar" id="settings-avatar-preview">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="8" r="4"></circle>
-                <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
-              </svg>
+          <div class="settings-hero-avatar-col">
+            <div class="settings-hero-avatar-wrap">
+              <div class="settings-heading-avatar" id="settings-avatar-preview">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="8" r="4"></circle>
+                  <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
+                </svg>
+              </div>
             </div>
+
+            <div class="own-rating own-rating-hero" data-own-rating></div>
           </div>
 
           <div class="settings-hero-text">
-            <span class="settings-badge">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="5" y="11" width="14" height="9" rx="2"></rect>
-                <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
-              </svg>
-              Konto prywatne
-            </span>
-
             <h1>Edytuj swój profil</h1>
 
             <p>Zmień informacje, które są powiązane z Twoim kontem.</p>
@@ -145,11 +142,15 @@
           </div>
 
           <div class="avatar-editor">
-            <div class="settings-avatar-large" id="avatar-large-preview">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="8" r="4"></circle>
-                <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
-              </svg>
+            <div class="avatar-rating-col">
+              <div class="settings-avatar-large" id="avatar-large-preview">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="8" r="4"></circle>
+                  <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
+                </svg>
+              </div>
+
+              <div class="own-rating" data-own-rating></div>
             </div>
 
             <div class="avatar-actions">
@@ -351,5 +352,6 @@
     <script src="../scripts/location/location-picker.js"></script>
     <script src="../scripts/auth/auth.js"></script>
     <script src="../scripts/settings/settings.js"></script>
+    <script src="../scripts/settings/own-rating.js"></script>
   </body>
 </html>

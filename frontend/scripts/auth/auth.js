@@ -1,5 +1,15 @@
 const API_BASE_URL = "http://localhost:8080";
 
+// Sesja (ciasteczko JSESSIONID) działa tylko wtedy, gdy strona i API mają tę
+// samą nazwę hosta. Dla przeglądarki 127.0.0.1 i localhost to dwie różne
+// strony, więc po wejściu przez 127.0.0.1 logowanie "nie trzyma się".
+// Dlatego przełączamy się automatycznie na localhost.
+if (window.location.hostname === "127.0.0.1") {
+  window.location.replace(
+    window.location.href.replace("//127.0.0.1", "//localhost"),
+  );
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   setupLoginPage();
   setupRegisterPage();
@@ -50,6 +60,14 @@ function setupLoginPage() {
   if (googleButton) {
     googleButton.addEventListener("click", handleGoogleLogin);
   }
+
+  const oauthError = new URLSearchParams(window.location.search).get("error");
+
+  if (oauthError === "account_banned") {
+    showAuthMessage("Twoje konto zostało zablokowane.", true);
+  } else if (oauthError) {
+    showAuthMessage("Logowanie przez Google nie powiodło się.", true);
+  }
 }
 
 async function handleLogin(event) {
@@ -89,6 +107,18 @@ async function handleLogin(event) {
         return;
       }
 
+      if (response.status === 403) {
+        const banInfo = await response.json().catch(() => ({}));
+
+        showAuthMessage(
+          banInfo.reason
+            ? `Konto zablokowane. Powód: ${banInfo.reason}`
+            : banInfo.message || "Twoje konto zostało zablokowane.",
+          true,
+        );
+        return;
+      }
+
       showAuthMessage("Wystąpił błąd podczas logowania.", true);
 
       return;
@@ -98,7 +128,9 @@ async function handleLogin(event) {
 
     console.log("Zalogowano użytkownika:", user);
 
-    window.location.href = "index.html";
+    window.location.href = user.passwordChangeRequired
+      ? "admin.html"
+      : "index.html";
   } catch (error) {
     console.error("Błąd logowania:", error);
 
@@ -341,7 +373,10 @@ function showVerifyStep(cooldownSeconds) {
   codeInput.value = "";
   codeInput.focus();
 
-  showAuthMessage("Kod został wysłany. Sprawdź swoją skrzynkę (także SPAM).", false);
+  showAuthMessage(
+    "Kod został wysłany. Sprawdź swoją skrzynkę (także SPAM).",
+    false,
+  );
 
   startResendCooldown(cooldownSeconds);
 }
@@ -558,7 +593,7 @@ function displayLoggedUser(user) {
           href="my-offers.html"
           class="account-menu-item"
         >
-          Ogłoszenia
+          Moje ogłoszenia
         </a>
 
         <a
@@ -567,6 +602,17 @@ function displayLoggedUser(user) {
         >
           Rozmowy
         </a>
+
+        ${
+          user.role === "ADMIN" || user.role === "MODERATOR"
+            ? `<a
+          href="admin.html"
+          class="account-menu-item"
+        >
+          ${user.role === "ADMIN" ? "Panel administratora" : "Panel moderatora"}
+        </a>`
+            : ""
+        }
 
         <a
           href="payments.html"

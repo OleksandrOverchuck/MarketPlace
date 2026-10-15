@@ -13,6 +13,7 @@ import pl.jollycart.category.CategoryRepository;
 import pl.jollycart.offer.dto.CreateOfferRequest;
 import pl.jollycart.offer.dto.OfferResponse;
 import pl.jollycart.offer.dto.UpdateOfferRequest;
+import pl.jollycart.user.AccountStatus;
 import pl.jollycart.user.User;
 import pl.jollycart.user.UserRepository;
 
@@ -136,11 +137,18 @@ public class OfferService {
         BigDecimal maxPrice
     ) {
 
+    // Tylko aktywne ogłoszenia użytkowników, którzy nie są zbanowani.
     Specification<Offer> specification =
             (root, query, criteriaBuilder) ->
-                    criteriaBuilder.equal(
-                            root.get("status"),
-                            OfferStatus.ACTIVE
+                    criteriaBuilder.and(
+                            criteriaBuilder.equal(
+                                    root.get("status"),
+                                    OfferStatus.ACTIVE
+                            ),
+                            criteriaBuilder.equal(
+                                    root.get("user").get("status"),
+                                    AccountStatus.ACTIVE
+                            )
                     );
 
     /*
@@ -326,7 +334,10 @@ public class OfferService {
 
     @Transactional(readOnly = true)
     public long countActiveOffers() {
-        return offerRepository.countByStatus(OfferStatus.ACTIVE);
+        return offerRepository.countByStatusAndUserStatus(
+                OfferStatus.ACTIVE,
+                AccountStatus.ACTIVE
+        );
     }
 
     public void deleteOffer(

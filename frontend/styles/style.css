@@ -2432,3 +2432,20 @@ h3 {
   color: #aaa;
   cursor: default;
 }
+
+/* Klikalne ikony / nicki użytkowników (otwierają profil) */
+[data-profile-id] {
+  cursor: pointer;
+}
+
+[data-profile-id]:hover .offer-author-name,
+[data-profile-id]:hover .cv-user,
+[data-profile-id]:hover strong {
+  text-decoration: underline;
+}
+
+[data-profile-id]:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+  border-radius: 6px;
+}

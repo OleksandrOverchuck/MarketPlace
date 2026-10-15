@@ -197,7 +197,7 @@ async function renderPublicOffer(offer) {
           <span class="location">${pinIcon}<span>${escapeIndexHtml(offer.location || "Lokalizacja nie podana")}</span></span>
           <span class="date">${formatPublicDate(offer.createdAt)}</span>
         </div>
-        <div class="offer-author">
+        <div class="offer-author" data-profile-id="${escapeIndexHtml(offer.userId)}" role="link" tabindex="0" title="Zobacz profil użytkownika">
           <span class="offer-author-avatar" aria-hidden="true">${escapeIndexHtml(seller.trim().charAt(0) || "U")}</span>
           <span class="offer-author-name">${escapeIndexHtml(seller)}</span>
         </div>

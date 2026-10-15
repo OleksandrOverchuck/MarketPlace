@@ -822,7 +822,7 @@ function renderOfferDetails(root, offer, images) {
           </p>
         </div>
 
-        <div class="od-card od-seller-card">
+        <div class="od-card od-seller-card" data-profile-id="${escapeDetailsHtml(offer.userId)}" role="link" tabindex="0" title="Zobacz profil użytkownika">
           <div class="od-seller-avatar" aria-hidden="true">
             ${escapeDetailsHtml(sellerInitial)}
           </div>

@@ -260,6 +260,10 @@ function cvRenderRow(item) {
     preview = `<span class="cv-preview">${mineMessage ? "Ty: " : ""}${cvEscape(lastMessage.content || (lastMessage.attachment ? "📎 " + lastMessage.attachment.fileName : ""))}</span>`;
   }
 
+  const profileAttr = other?.userId
+    ? ` data-profile-id="${cvEscape(other.userId)}" role="link" tabindex="0" title="Zobacz profil użytkownika"`
+    : "";
+
   let href = `chat.html?conversationId=${encodeURIComponent(conversation.id)}&from=conversations`;
 
   if (conversation.offerId) {
@@ -268,11 +272,11 @@ function cvRenderRow(item) {
 
   return `
     <a class="cv-row" href="${href}">
-      <span class="cv-avatar">${avatar}</span>
+      <span class="cv-avatar"${profileAttr}>${avatar}</span>
 
       <span class="cv-main">
         <span class="cv-top">
-          <span class="cv-user">${cvEscape(nickname)}</span>
+          <span class="cv-user"${profileAttr}>${cvEscape(nickname)}</span>
           <span class="cv-time">${cvFormatTime(item.time)}</span>
         </span>
 

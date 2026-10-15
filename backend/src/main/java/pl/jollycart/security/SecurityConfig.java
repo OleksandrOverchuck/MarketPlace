@@ -1,17 +1,24 @@
 package pl.jollycart.security;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import pl.jollycart.user.UserRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -25,7 +32,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            CustomOAuth2UserService customOAuth2UserService
+            CustomOAuth2UserService customOAuth2UserService,
+            UserRepository userRepository
     ) throws Exception {
 
         http
@@ -34,6 +42,14 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+
+                        // Panel administratora - tylko ADMIN
+                        .requestMatchers("/api/admin/**")
+                        .hasRole("ADMIN")
+
+                        // Panel moderacji - MODERATOR i ADMIN
+                        .requestMatchers("/api/moderation/**")
+                        .hasAnyRole("MODERATOR", "ADMIN")
 
                         // Publiczne zasoby
                         .requestMatchers(
@@ -58,6 +74,12 @@ public class SecurityConfig {
                                 "/api/offers",
                                 "/api/offers/**",
                                 "/api/categories"
+                        ).permitAll()
+
+                        // Publiczny profil użytkownika (z ocenami)
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/users/*/profile"
                         ).permitAll()
 
                         // Rejestracja i zwykłe logowanie
@@ -95,6 +117,27 @@ public class SecurityConfig {
 
                 .csrf(csrf -> csrf.disable())
 
+                // Niezalogowane zapytania do API dostają czyste 401,
+                // a nie przekierowanie do Google (które przeglądarka
+                // blokuje jako błąd CORS).
+                .exceptionHandling(exceptions -> exceptions
+                        .defaultAuthenticationEntryPointFor(
+                                new HttpStatusEntryPoint(
+                                        HttpStatus.UNAUTHORIZED
+                                ),
+                                request -> request
+                                        .getRequestURI()
+                                        .startsWith("/api/")
+                        )
+                )
+
+                // Sprawdza ban / usunięcie konta / aktualną rolę
+                // przy każdym żądaniu zalogowanego użytkownika.
+                .addFilterBefore(
+                        new UserStatusFilter(userRepository),
+                        AuthorizationFilter.class
+                )
+
                 .oauth2Login(oauth2 -> oauth2
 
                         // NIE ustawiamy:
@@ -111,6 +154,23 @@ public class SecurityConfig {
                                         + "/frontend/pages/index.html",
                                 true
                         )
+
+                        .failureHandler((request, response, exception) -> {
+                            String code = "oauth_failed";
+
+                            if (exception instanceof OAuth2AuthenticationException oauthException) {
+                                code = oauthException.getError().getErrorCode();
+                            }
+
+                            response.sendRedirect(
+                                    FRONTEND_URL
+                                            + "/frontend/pages/login.html?error="
+                                            + URLEncoder.encode(
+                                                    code,
+                                                    StandardCharsets.UTF_8
+                                            )
+                            );
+                        })
                 );
 
         return http.build();

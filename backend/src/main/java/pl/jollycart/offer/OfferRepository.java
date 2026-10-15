@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import pl.jollycart.user.AccountStatus;
+
 public interface OfferRepository
         extends JpaRepository<Offer, Long>, JpaSpecificationExecutor<Offer> {
 
@@ -55,4 +57,11 @@ public interface OfferRepository
     long countByStatus(
             OfferStatus status
     );
+
+    long countByStatusAndUserStatus(
+            OfferStatus status,
+            AccountStatus userStatus
+    );
+
+    long countByUserId(Long userId);
 }

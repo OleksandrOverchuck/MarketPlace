@@ -11,7 +11,10 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
+import org.springframework.security.oauth2.core.OAuth2Error;
+
 import pl.jollycart.auth.AuthService;
+import pl.jollycart.user.User;
 
 @Service
 public class CustomOAuth2UserService extends OidcUserService {
@@ -34,12 +37,19 @@ public class CustomOAuth2UserService extends OidcUserService {
         String nickname = oidcUser.getFullName();
         String avatarUrl = oidcUser.getPicture();
 
-        authService.getOrCreateGoogleUser(
+        User user = authService.getOrCreateGoogleUser(
                 email,
                 providerId,
                 nickname,
                 avatarUrl
         );
+
+        if (user.isBanned()) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("account_banned"),
+                    "Twoje konto zostało zablokowane"
+            );
+        }
 
         Set<GrantedAuthority> authorities =
                 new HashSet<>(oidcUser.getAuthorities());

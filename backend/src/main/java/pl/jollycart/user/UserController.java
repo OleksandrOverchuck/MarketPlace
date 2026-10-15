@@ -19,7 +19,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
 import jakarta.validation.Valid;
+import pl.jollycart.user.dto.ChangePasswordRequest;
 import pl.jollycart.file.FileService;
 import pl.jollycart.file.ImageFileValidator;
 import pl.jollycart.user.dto.UpdateUserRequest;
@@ -34,13 +42,16 @@ public class UserController {
     private final UserService userService;
     private final FileService fileService;
     private final UserRepository userRepository;
+    private final PasswordService passwordService;
 
     public UserController(
             UserService userService,
             FileService fileService,
             UserRepository userRepository,
-            ImageFileValidator imageFileValidator
+            ImageFileValidator imageFileValidator,
+            PasswordService passwordService
     ) {
+        this.passwordService = passwordService;
         this.userService = userService;
         this.fileService = fileService;
         this.userRepository = userRepository;
@@ -64,6 +75,46 @@ public class UserController {
         String email = authentication.getName();
         UserResponse updatedUser = userService.updateUser(email, request);
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<Void> changePassword(
+            Authentication authentication,
+            @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        passwordService.changePassword(
+                authentication.getName(),
+                request
+        );
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(
+            IllegalArgumentException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidation(
+            MethodArgumentNotValidException exception
+    ) {
+        Map<String, String> errors = new LinkedHashMap<>();
+
+        exception.getBindingResult()
+                .getFieldErrors()
+                .forEach(error -> errors.put(
+                        error.getField(),
+                        error.getDefaultMessage()
+                ));
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errors);
     }
 
     @PostMapping(

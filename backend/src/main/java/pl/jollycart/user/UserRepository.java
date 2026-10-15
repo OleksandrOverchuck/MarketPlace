@@ -1,10 +1,12 @@
 package pl.jollycart.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository
+        extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     Optional<User> findByEmail(String email);
 
@@ -14,6 +16,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
             AuthProvider authProvider,
             String providerId
     );
+
+    boolean existsByRole(Role role);
 
     boolean existsByEmail(String email);
 

@@ -105,6 +105,21 @@ public class AuthController {
                 .body(Map.of("message", exception.getMessage()));
     }
 
+    @ExceptionHandler(AccountBannedException.class)
+    public ResponseEntity<Map<String, Object>> handleBanned(
+            AccountBannedException exception
+    ) {
+        Map<String, Object> body = new LinkedHashMap<>();
+
+        body.put("message", exception.getMessage());
+        body.put("banned", true);
+        body.put("reason", exception.getReason());
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(body);
+    }
+
     @ExceptionHandler(EmailSendException.class)
     public ResponseEntity<Map<String, String>> handleEmailSend(
             EmailSendException exception

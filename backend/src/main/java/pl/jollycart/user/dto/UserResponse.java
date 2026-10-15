@@ -1,6 +1,7 @@
 package pl.jollycart.user.dto;
 
 import pl.jollycart.user.AuthProvider;
+import pl.jollycart.user.Role;
 import pl.jollycart.user.User;
 
 public record UserResponse(
@@ -10,7 +11,9 @@ public record UserResponse(
         String avatarUrl,
         String phone,
         String location,
-        AuthProvider authProvider
+        AuthProvider authProvider,
+        Role role,
+        boolean passwordChangeRequired
 ) {
 
     public static UserResponse from(User user) {
@@ -21,7 +24,9 @@ public record UserResponse(
                 user.getAvatarUrl(),
                 user.getPhone(),
                 user.getLocation(),
-                user.getAuthProvider()
+                user.getAuthProvider(),
+                user.getRole(),
+                user.isPasswordChangeRequired()
         );
     }
 }

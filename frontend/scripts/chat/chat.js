@@ -200,6 +200,14 @@ function renderConversationHeader() {
     nameElement.textContent = otherParticipant.nickname || "Użytkownik";
   }
 
+  const userBox = document.getElementById("chat-user");
+
+  if (userBox && otherParticipant.userId) {
+    userBox.setAttribute("data-profile-id", otherParticipant.userId);
+    userBox.setAttribute("role", "link");
+    userBox.tabIndex = 0;
+  }
+
   if (!avatarElement) {
     return;
   }

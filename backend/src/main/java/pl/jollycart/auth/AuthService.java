@@ -69,12 +69,26 @@ public class AuthService {
 
     public Authentication authenticate(LoginRequest request) {
 
-        return authenticationManager.authenticate(
+        Authentication authentication = authenticationManager.authenticate(
                 new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
                         request.email(),
                         request.password()
                 )
         );
+
+        // Sprawdzamy ban DOPIERO po poprawnym haśle, żeby nie ujawniać
+        // osobom bez hasła, że dane konto jest zablokowane.
+        if (authentication != null && authentication.getName() != null) {
+            userRepository.findByEmail(authentication.getName())
+                    .filter(User::isBanned)
+                    .ifPresent(user -> {
+                        throw new AccountBannedException(
+                                user.getBanReason()
+                        );
+                    });
+        }
+
+        return authentication;
     }
 
     @Transactional(readOnly = true)
