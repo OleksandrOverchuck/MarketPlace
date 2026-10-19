@@ -7,11 +7,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
-
-import org.springframework.security.oauth2.core.OAuth2Error;
 
 import pl.jollycart.auth.AuthService;
 import pl.jollycart.user.User;
@@ -33,6 +32,14 @@ public class CustomOAuth2UserService extends OidcUserService {
         OidcUser oidcUser = super.loadUser(userRequest);
 
         String email = oidcUser.getEmail();
+
+        // Łączymy konta po emailu tylko, gdy Google potwierdza ten adres
+        if (!Boolean.TRUE.equals(oidcUser.getEmailVerified())) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("email_not_verified"),
+                    "Adres email konta Google nie jest zweryfikowany"
+            );
+        }
         String providerId = oidcUser.getSubject();
         String nickname = oidcUser.getFullName();
         String avatarUrl = oidcUser.getPicture();

@@ -109,18 +109,24 @@ public class AuthService {
             String avatarUrl
     ) {
 
+        // 1. Użytkownik, który już logował się przez Google
         return userRepository
                 .findByAuthProviderAndProviderId(
                         AuthProvider.GOOGLE,
                         providerId
                 )
+                // 2. Konto założone ręcznie (LOCAL) z tym samym emailem
+                //    -> podpinamy do niego Google zamiast zgłaszać błąd
+                .or(() -> userRepository
+                        .findByEmail(email)
+                        .map(existing -> linkGoogleAccount(
+                                existing,
+                                providerId,
+                                avatarUrl
+                        ))
+                )
+                // 3. Zupełnie nowy użytkownik
                 .orElseGet(() -> {
-
-                    if (userRepository.existsByEmail(email)) {
-                        throw new IllegalArgumentException(
-                                "Konto z tym adresem email już istnieje"
-                        );
-                    }
 
                     User user = new User();
 
@@ -139,6 +145,31 @@ public class AuthService {
 
                     return userRepository.save(user);
                 });
+    }
+
+    private User linkGoogleAccount(
+            User existing,
+            String providerId,
+            String avatarUrl
+    ) {
+
+        // Email jest już powiązany z innym kontem Google - nie nadpisujemy
+        if (existing.getProviderId() != null
+                && !existing.getProviderId().equals(providerId)) {
+            throw new IllegalArgumentException(
+                    "Konto z tym adresem email jest powiązane z innym kontem Google"
+            );
+        }
+
+        // authProvider zostaje bez zmian (LOCAL), dzięki temu logowanie
+        // hasłem i zmiana hasła nadal działają obok logowania przez Google
+        existing.setProviderId(providerId);
+
+        if (existing.getAvatarUrl() == null && avatarUrl != null) {
+            existing.setAvatarUrl(avatarUrl);
+        }
+
+        return userRepository.save(existing);
     }
 
     private String createUniqueNickname(
