@@ -188,6 +188,43 @@
           </div>
         </section>
 
+        <section class="settings-card" id="payouts">
+          <div class="settings-card-header">
+            <div>
+              <span class="settings-eyebrow">Płatności</span>
+
+              <h2>Konto bankowe do wypłat</h2>
+
+              <p>
+                Dodaj konto, aby w ogłoszeniach sprzedaży włączyć płatność przez
+                JollyCart. Dane podajesz bezpośrednio u operatora płatności
+                (Stripe), JollyCart nie zapisuje numeru Twojego konta.
+              </p>
+            </div>
+          </div>
+
+          <p id="payouts-status" class="settings-help">
+            Sprawdzanie statusu...
+          </p>
+
+          <div
+            id="payouts-message"
+            class="settings-message"
+            aria-live="polite"
+          ></div>
+
+          <div class="settings-actions">
+            <button
+              type="button"
+              class="settings-save-button"
+              id="payouts-button"
+              hidden
+            >
+              Dodaj konto bankowe
+            </button>
+          </div>
+        </section>
+
         <!-- =========================
              PODSTAWOWE INFORMACJE
              ========================= -->
@@ -252,54 +289,83 @@
 
                 <div class="phone-group">
                   <div class="phone-select-wrapper">
-                    <select id="phone-country" name="phone-country" aria-label="Kraj">
-                  <option value="PL" data-code="+48" data-min="9" data-max="9">
-                    Polska (+48)
-                  </option>
+                    <select
+                      id="phone-country"
+                      name="phone-country"
+                      aria-label="Kraj"
+                    >
+                      <option
+                        value="PL"
+                        data-code="+48"
+                        data-min="9"
+                        data-max="9"
+                      >
+                        Polska (+48)
+                      </option>
 
-                  <option value="UA" data-code="+380" data-min="9" data-max="9">
-                    Ukraina (+380)
-                  </option>
+                      <option
+                        value="UA"
+                        data-code="+380"
+                        data-min="9"
+                        data-max="9"
+                      >
+                        Ukraina (+380)
+                      </option>
 
-                  <option
-                    value="DE"
-                    data-code="+49"
-                    data-min="10"
-                    data-max="11"
-                  >
-                    Niemcy (+49)
-                  </option>
+                      <option
+                        value="DE"
+                        data-code="+49"
+                        data-min="10"
+                        data-max="11"
+                      >
+                        Niemcy (+49)
+                      </option>
 
-                  <option
-                    value="GB"
-                    data-code="+44"
-                    data-min="10"
-                    data-max="10"
-                  >
-                    Wielka Brytania (+44)
-                  </option>
+                      <option
+                        value="GB"
+                        data-code="+44"
+                        data-min="10"
+                        data-max="10"
+                      >
+                        Wielka Brytania (+44)
+                      </option>
 
-                  <option value="FR" data-code="+33" data-min="9" data-max="9">
-                    Francja (+33)
-                  </option>
+                      <option
+                        value="FR"
+                        data-code="+33"
+                        data-min="9"
+                        data-max="9"
+                      >
+                        Francja (+33)
+                      </option>
 
-                  <option value="CZ" data-code="+420" data-min="9" data-max="9">
-                    Czechy (+420)
-                  </option>
+                      <option
+                        value="CZ"
+                        data-code="+420"
+                        data-min="9"
+                        data-max="9"
+                      >
+                        Czechy (+420)
+                      </option>
 
-                  <option value="SK" data-code="+421" data-min="9" data-max="9">
-                    Słowacja (+421)
-                  </option>
+                      <option
+                        value="SK"
+                        data-code="+421"
+                        data-min="9"
+                        data-max="9"
+                      >
+                        Słowacja (+421)
+                      </option>
 
-                  <option
-                    value="AT"
-                    data-code="+43"
-                    data-min="10"
-                    data-max="13"
-                  >
-                    Austria (+43)
-                  </option>
-                </select>
+                      <option
+                        value="AT"
+                        data-code="+43"
+                        data-min="10"
+                        data-max="13"
+                      >
+                        Austria (+43)
+                      </option>
+                    </select>
                   </div>
 
                   <div class="phone-input-wrapper">
@@ -322,7 +388,6 @@
                   Polska: wpisz dokładnie 9 cyfr.
                 </span>
               </div>
-
             </div>
 
             <div
@@ -353,5 +418,6 @@
     <script src="../scripts/auth/auth.js"></script>
     <script src="../scripts/settings/settings.js"></script>
     <script src="../scripts/settings/own-rating.js"></script>
+    <script src="../scripts/settings/payouts.js"></script>
   </body>
 </html>
