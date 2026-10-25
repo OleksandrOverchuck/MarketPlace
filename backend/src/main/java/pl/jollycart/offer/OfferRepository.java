@@ -2,14 +2,26 @@ package pl.jollycart.offer;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import jakarta.persistence.LockModeType;
 
 import pl.jollycart.user.AccountStatus;
 
 public interface OfferRepository
         extends JpaRepository<Offer, Long>, JpaSpecificationExecutor<Offer> {
+
+    // Blokada wiersza na czas rezerwacji - dwóch kupujących naraz
+    // nie przejdzie przez "kup teraz" dla tej samej oferty.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select o from Offer o where o.id = :id")
+    Optional<Offer> findByIdForUpdate(@Param("id") Long id);
 
     List<Offer> findAllByOrderByCreatedAtDesc();
 

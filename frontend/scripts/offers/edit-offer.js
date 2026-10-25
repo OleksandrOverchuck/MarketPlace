@@ -66,6 +66,7 @@ async function loadOfferForEdit() {
     document.getElementById("category").value = String(data.categoryId ?? "");
     document.getElementById("price").value = data.price ?? "";
     document.getElementById("location").value = data.location || "";
+    setOnlinePaymentValue(Boolean(data.onlinePaymentEnabled));
     updateCounters();
     await loadExistingImages();
   } catch (error) {
@@ -122,6 +123,7 @@ async function updateOffer(event) {
         type,
         status,
         categoryId: Number(categoryId),
+        onlinePaymentEnabled: getOnlinePaymentValue(),
       }),
     });
 

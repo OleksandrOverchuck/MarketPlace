@@ -82,6 +82,13 @@ public class SecurityConfig {
                                 "/api/users/*/profile"
                         ).permitAll()
 
+                        // Webhook Stripe - autoryzacja przez podpis
+                        // (nagłówek Stripe-Signature), nie przez sesję.
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/payments/webhook"
+                        ).permitAll()
+
                         // Rejestracja i zwykłe logowanie
                         .requestMatchers(
                                 HttpMethod.POST,

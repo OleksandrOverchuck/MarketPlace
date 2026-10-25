@@ -37,7 +37,22 @@ public record CreateOfferRequest(
         @NotNull(message = "Typ oferty jest wymagany")
         OfferType type,
 
-        @NotNull(message = "Kategoria jest wymagana")
-        Long categoryId
+               @NotNull(message = "Kategoria jest wymagana")
+        Long categoryId,
+
+        // Płatność przez JollyCart (opcjonalna, tylko dla typu SALE)
+        Boolean onlinePaymentEnabled
 ) {
+
+    // Zgodność ze starym wywołaniem (bez płatności), m.in. dla testów.
+    public CreateOfferRequest(
+            String title,
+            String description,
+            BigDecimal price,
+            String location,
+            OfferType type,
+            Long categoryId
+    ) {
+        this(title, description, price, location, type, categoryId, null);
+    }
 }

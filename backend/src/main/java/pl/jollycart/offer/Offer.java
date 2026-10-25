@@ -47,6 +47,13 @@ public class Offer {
     @Column(nullable = false, length = 20)
     private OfferStatus status;
 
+    @Column(
+        name = "online_payment_enabled",
+        nullable = false,
+        columnDefinition = "bit(1) default 0"
+    )
+    private boolean onlinePaymentEnabled = false;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -134,6 +141,14 @@ public class Offer {
 
     public void setStatus(OfferStatus status) {
         this.status = status;
+    }
+
+    public boolean isOnlinePaymentEnabled() {
+        return onlinePaymentEnabled;
+    }
+
+    public void setOnlinePaymentEnabled(boolean onlinePaymentEnabled) {
+        this.onlinePaymentEnabled = onlinePaymentEnabled;
     }
 
     public User getUser() {

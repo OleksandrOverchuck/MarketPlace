@@ -38,7 +38,9 @@ public record OfferResponse(
 
         LocalDateTime createdAt,
 
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+
+        boolean onlinePaymentEnabled
 ) {
 
     public static OfferResponse from(Offer offer) {
@@ -57,7 +59,8 @@ public record OfferResponse(
                 offer.getCategory().getId(),
                 offer.getCategory().getName(),
                 offer.getCreatedAt(),
-                offer.getUpdatedAt()
+                offer.getUpdatedAt(),
+                offer.isOnlinePaymentEnabled()
         );
     }
 }

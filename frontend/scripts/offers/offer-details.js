@@ -53,6 +53,11 @@ async function loadOfferDetails() {
     // Przycisk wiadomości musi być podpięty dopiero
     // po wyrenderowaniu HTML-a ogłoszenia.
     await setupMessageButton(offer);
+
+    // Przycisk "Kup przez JollyCart" (scripts/payments/buy-button.js)
+    if (typeof setupBuyButton === "function") {
+      await setupBuyButton(offer);
+    }
   } catch (error) {
     console.error("Błąd pobierania szczegółów ogłoszenia:", error);
 
@@ -645,9 +650,7 @@ function renderOfferDetails(root, offer, images) {
 
   document.title = `${offer.title} – JollyCart`;
 
-  const breadcrumbCurrent = document.getElementById(
-    "offer-breadcrumb-current",
-  );
+  const breadcrumbCurrent = document.getElementById("offer-breadcrumb-current");
 
   if (breadcrumbCurrent) {
     breadcrumbCurrent.textContent = categoryName;
@@ -815,6 +818,17 @@ function renderOfferDetails(root, offer, images) {
           >
             Wyślij wiadomość
           </button>
+
+          <button
+            id="buy-button"
+            class="send-message-button buy-button"
+            type="button"
+            style="display: none;"
+          >
+            Kup przez JollyCart
+          </button>
+
+          <p class="od-payment-note" id="buy-note" hidden></p>
 
           <p class="od-login-hint" id="od-login-hint" hidden>
             Chcesz napisać do ogłaszającego?
@@ -1102,6 +1116,15 @@ function getDetailsStatusNotice(status) {
       tone: "sold",
       label: "Sprzedane",
       message: "To ogłoszenie zostało oznaczone jako sprzedane.",
+    };
+  }
+
+  if (status === "RESERVED") {
+    return {
+      tone: "inactive",
+      label: "Zarezerwowane",
+      message:
+        "Ktoś właśnie kupuje ten przedmiot. Oferta jest chwilowo niedostępna.",
     };
   }
 

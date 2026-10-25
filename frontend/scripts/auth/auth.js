@@ -603,6 +603,13 @@ function displayLoggedUser(user) {
           Rozmowy
         </a>
 
+                <a
+          href="orders.html"
+          class="account-menu-item"
+        >
+          Zamówienia
+        </a>
+
         ${
           user.role === "ADMIN" || user.role === "MODERATOR"
             ? `<a

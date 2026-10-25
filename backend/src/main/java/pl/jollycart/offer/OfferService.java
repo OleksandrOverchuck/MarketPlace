@@ -3,6 +3,7 @@ package pl.jollycart.offer;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import pl.jollycart.category.CategoryRepository;
 import pl.jollycart.offer.dto.CreateOfferRequest;
 import pl.jollycart.offer.dto.OfferResponse;
 import pl.jollycart.offer.dto.UpdateOfferRequest;
+import pl.jollycart.payment.SellerAccountService;
 import pl.jollycart.user.AccountStatus;
 import pl.jollycart.user.User;
 import pl.jollycart.user.UserRepository;
@@ -24,15 +26,64 @@ public class OfferService {
     private final OfferRepository offerRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final SellerAccountService sellerAccountService;
 
+    @Autowired
+    public OfferService(
+            OfferRepository offerRepository,
+            UserRepository userRepository,
+            CategoryRepository categoryRepository,
+            SellerAccountService sellerAccountService
+    ) {
+        this.offerRepository = offerRepository;
+        this.userRepository = userRepository;
+        this.categoryRepository = categoryRepository;
+        this.sellerAccountService = sellerAccountService;
+    }
+
+    // Konstruktor bez płatności (używany m.in. w testach jednostkowych).
     public OfferService(
             OfferRepository offerRepository,
             UserRepository userRepository,
             CategoryRepository categoryRepository
     ) {
-        this.offerRepository = offerRepository;
-        this.userRepository = userRepository;
-        this.categoryRepository = categoryRepository;
+        this(offerRepository, userRepository, categoryRepository, null);
+    }
+
+    /*
+     * Płatność przez JollyCart: tylko oferty SALE z ceną, a sprzedawca
+     * musi mieć aktywne konto wypłat (dodane w ustawieniach profilu).
+     */
+    private boolean resolveOnlinePayment(
+            Boolean requested,
+            OfferType type,
+            BigDecimal price,
+            User seller
+    ) {
+        if (!Boolean.TRUE.equals(requested)) {
+            return false;
+        }
+
+        if (type != OfferType.SALE) {
+            throw new IllegalArgumentException(
+                    "Płatność przez JollyCart jest dostępna tylko dla ofert sprzedaży"
+            );
+        }
+
+        if (price == null || price.compareTo(new BigDecimal("2.00")) < 0) {
+            throw new IllegalArgumentException(
+                    "Płatność przez JollyCart wymaga ceny co najmniej 2,00 zł"
+            );
+        }
+
+        if (sellerAccountService == null
+                || !sellerAccountService.isPayoutReady(seller.getId())) {
+            throw new IllegalArgumentException(
+                    "Aby włączyć płatność przez JollyCart, dodaj konto bankowe w ustawieniach profilu"
+            );
+        }
+
+        return true;
     }
 
     public OfferResponse createOffer(
@@ -66,6 +117,14 @@ public class OfferService {
         offer.setStatus(OfferStatus.ACTIVE);
         offer.setUser(user);
         offer.setCategory(category);
+        offer.setOnlinePaymentEnabled(
+                resolveOnlinePayment(
+                        request.onlinePaymentEnabled(),
+                        request.type(),
+                        request.price(),
+                        user
+                )
+        );
 
         Offer savedOffer = offerRepository.save(offer);
 
@@ -319,6 +378,30 @@ public class OfferService {
                         )
                 );
 
+        // Gdy trwa transakcja (RESERVED), oferta jest zamrożona -
+        // inaczej sprzedawca mógłby ją zmienić po tym, jak ktoś zapłacił.
+        if (offer.getStatus() == OfferStatus.RESERVED) {
+            throw new IllegalArgumentException(
+                    "Oferta jest w trakcie transakcji - nie można jej teraz edytować"
+            );
+        }
+
+        if (request.status() == OfferStatus.RESERVED) {
+            throw new IllegalArgumentException(
+                    "Status \"zarezerwowane\" ustawia system podczas płatności"
+            );
+        }
+
+        // Brak pola w żądaniu = bez zmiany (ale tylko dla ofert SALE).
+        boolean onlinePayment = request.onlinePaymentEnabled() == null
+                ? offer.isOnlinePaymentEnabled() && request.type() == OfferType.SALE
+                : resolveOnlinePayment(
+                        request.onlinePaymentEnabled(),
+                        request.type(),
+                        request.price(),
+                        offer.getUser()
+                );
+
         offer.setTitle(request.title());
         offer.setDescription(request.description());
         offer.setPrice(request.price());
@@ -326,6 +409,7 @@ public class OfferService {
         offer.setType(request.type());
         offer.setStatus(request.status());
         offer.setCategory(category);
+        offer.setOnlinePaymentEnabled(onlinePayment);
 
         Offer savedOffer = offerRepository.save(offer);
 
@@ -355,6 +439,12 @@ public class OfferService {
         if (!offer.getUser().getEmail().equals(currentEmail)) {
             throw new IllegalArgumentException(
                     "Nie możesz usunąć cudzej oferty"
+            );
+        }
+
+        if (offer.getStatus() == OfferStatus.RESERVED) {
+            throw new IllegalArgumentException(
+                    "Oferta jest w trakcie transakcji - nie można jej teraz usunąć"
             );
         }
 

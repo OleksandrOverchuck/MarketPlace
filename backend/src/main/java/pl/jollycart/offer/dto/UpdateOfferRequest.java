@@ -41,7 +41,22 @@ public record UpdateOfferRequest(
         @NotNull(message = "Status oferty jest wymagany")
         OfferStatus status,
 
-        @NotNull(message = "Kategoria jest wymagana")
-        Long categoryId
+                @NotNull(message = "Kategoria jest wymagana")
+        Long categoryId,
+
+        // Płatność przez JollyCart (opcjonalna, tylko dla typu SALE)
+        Boolean onlinePaymentEnabled
 ) {
+
+    public UpdateOfferRequest(
+            String title,
+            String description,
+            BigDecimal price,
+            String location,
+            OfferType type,
+            OfferStatus status,
+            Long categoryId
+    ) {
+        this(title, description, price, location, type, status, categoryId, null);
+    }
 }

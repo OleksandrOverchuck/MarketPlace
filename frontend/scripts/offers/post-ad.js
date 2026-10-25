@@ -204,6 +204,7 @@ async function handleCreateOffer(event) {
         location,
         type,
         categoryId: Number(categoryId),
+        onlinePaymentEnabled: getOnlinePaymentValue(),
       }),
     });
 

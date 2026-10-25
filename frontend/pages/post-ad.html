@@ -238,6 +238,21 @@
                 <span class="post-ad-help">Pole opcjonalne.</span>
               </div>
 
+              <div class="post-ad-field post-ad-field-full" id="online-payment-field" hidden>
+                <label
+                  for="online-payment"
+                  style="display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer;"
+                >
+                  <input
+                    type="checkbox"
+                    id="online-payment"
+                    style="width: 18px; height: 18px;"
+                  />
+                  <span>Przyjmuj płatności przez JollyCart</span>
+                </label>
+                <span class="post-ad-help" id="online-payment-help"></span>
+              </div>
+
               <p
                 id="post-ad-phone-note"
                 class="post-ad-phone-note post-ad-field-full"
@@ -266,6 +281,7 @@
     <script src="../scripts/location/maps-config.js"></script>
     <script src="../scripts/location/location-picker.js"></script>
     <script src="../scripts/auth/auth.js"></script>
+    <script src="../scripts/payments/offer-form-payment.js"></script>
     <script src="../scripts/offers/post-ad.js"></script>
   </body>
 </html>

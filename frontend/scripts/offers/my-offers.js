@@ -36,13 +36,17 @@ async function loadMyOffers() {
     const data = await readMyOffersResponse(response);
 
     if (!response.ok) {
-      throw new Error(data?.message || data?.error || "Nie udało się pobrać ogłoszeń.");
+      throw new Error(
+        data?.message || data?.error || "Nie udało się pobrać ogłoszeń.",
+      );
     }
 
     myOffers = Array.isArray(data) ? data : [];
 
     // zdjęcia pobieramy równolegle, żeby karty nie ładowały się po kolei
-    const urls = await Promise.all(myOffers.map((offer) => getFirstImageUrl(offer.id)));
+    const urls = await Promise.all(
+      myOffers.map((offer) => getFirstImageUrl(offer.id)),
+    );
     myOfferImages = {};
     myOffers.forEach((offer, index) => {
       myOfferImages[offer.id] = urls[index];
@@ -56,7 +60,8 @@ async function loadMyOffers() {
     grid.setAttribute("aria-busy", "false");
 
     if (message) {
-      message.textContent = "Nie udało się pobrać ogłoszeń. Sprawdź połączenie i odśwież stronę.";
+      message.textContent =
+        "Nie udało się pobrać ogłoszeń. Sprawdź połączenie i odśwież stronę.";
       message.className = "my-offers-message is-error";
     }
   }
@@ -82,7 +87,10 @@ async function getFirstImageUrl(offerId) {
 
 function showSkeletons(grid) {
   grid.setAttribute("aria-busy", "true");
-  grid.innerHTML = Array.from({ length: 3 }, () => '<div class="my-offer-skeleton"></div>').join("");
+  grid.innerHTML = Array.from(
+    { length: 3 },
+    () => '<div class="my-offer-skeleton"></div>',
+  ).join("");
 }
 
 function clearMyOffersMessage(message) {
@@ -169,14 +177,19 @@ function renderMyOffers() {
   grid.innerHTML = visible.map(renderMyOfferCard).join("");
 
   grid.querySelectorAll("[data-delete-offer]").forEach((button) => {
-    button.addEventListener("click", () => deleteOffer(button.dataset.deleteOffer));
+    button.addEventListener("click", () =>
+      deleteOffer(button.dataset.deleteOffer),
+    );
   });
 }
 
 function renderMyOfferCard(offer) {
   const status = getStatusLabel(offer.status);
   const type = getTypeLabel(offer.type);
-  const price = offer.price == null ? "Cena do uzgodnienia" : `${formatPrice(offer.price)} zł`;
+  const price =
+    offer.price == null
+      ? "Cena do uzgodnienia"
+      : `${formatPrice(offer.price)} zł`;
   const detailsUrl = `offer-details.html?id=${encodeURIComponent(offer.id)}`;
   const imageUrl = myOfferImages[offer.id];
 
@@ -196,7 +209,7 @@ function renderMyOfferCard(offer) {
         <h2>${escapeHtml(offer.title)}</h2>
         <p class="my-offer-description">${escapeHtml(offer.description)}</p>
         <div class="my-offer-meta">
-          <strong class="${offer.price == null ? 'is-negotiable' : ''}">${escapeHtml(price)}</strong>
+          <strong class="${offer.price == null ? "is-negotiable" : ""}">${escapeHtml(price)}</strong>
           <span>${escapeHtml(offer.location || "Lokalizacja nie podana")}</span>
         </div>
         <div class="my-offer-date">Dodano: ${formatDate(offer.createdAt)}</div>
@@ -218,10 +231,13 @@ async function deleteOffer(id) {
   if (!confirm("Czy na pewno chcesz usunąć to ogłoszenie?")) return;
 
   try {
-    const response = await fetch(`${MY_OFFERS_API_BASE_URL}/api/offers/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    const response = await fetch(
+      `${MY_OFFERS_API_BASE_URL}/api/offers/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      },
+    );
 
     if (response.status === 401 || response.status === 403) {
       window.location.href = "login.html";
@@ -230,7 +246,9 @@ async function deleteOffer(id) {
 
     if (!response.ok) {
       const data = await readMyOffersResponse(response);
-      throw new Error(data?.message || data?.error || "Nie udało się usunąć ogłoszenia.");
+      throw new Error(
+        data?.message || data?.error || "Nie udało się usunąć ogłoszenia.",
+      );
     }
 
     await loadMyOffers();
@@ -244,15 +262,31 @@ async function deleteOffer(id) {
    ========================= */
 
 function getStatusLabel(status) {
-  return { ACTIVE: "Aktywne", INACTIVE: "Nieaktywne", SOLD: "Sprzedane" }[status] || status || "Nieznany";
+  return (
+    {
+      ACTIVE: "Aktywne",
+      INACTIVE: "Nieaktywne",
+      SOLD: "Sprzedane",
+      RESERVED: "Zarezerwowane",
+    }[status] ||
+    status ||
+    "Nieznany"
+  );
 }
 
 function getTypeLabel(type) {
-  return { SALE: "Sprzedaż", SERVICE: "Usługa", JOB: "Oferta pracy" }[type] || type || "";
+  return (
+    { SALE: "Sprzedaż", SERVICE: "Usługa", JOB: "Oferta pracy" }[type] ||
+    type ||
+    ""
+  );
 }
 
 function formatPrice(value) {
-  return new Intl.NumberFormat("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value));
+  return new Intl.NumberFormat("pl-PL", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value));
 }
 
 function formatDate(value) {
@@ -265,7 +299,11 @@ function formatDate(value) {
 async function readMyOffersResponse(response) {
   const text = await response.text();
   if (!text) return null;
-  try { return JSON.parse(text); } catch { return { message: text }; }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text };
+  }
 }
 
 function escapeHtml(value) {
