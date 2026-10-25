@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 /* Powrót ze strony płatności Stripe: ?checkout=success|cancel&order=ID */
+/* Powrót ze strony płatności Stripe: ?checkout=success|cancel&order=ID */
 async function handleCheckoutReturn() {
   const params = new URLSearchParams(window.location.search);
   const checkout = params.get("checkout");
@@ -42,6 +43,9 @@ async function handleCheckoutReturn() {
   if (!checkout) {
     return;
   }
+
+  // Czyścimy parametry, żeby odświeżenie strony nie powtórzyło akcji
+  window.history.replaceState({}, "", window.location.pathname);
 
   if (checkout === "cancel" && orderId) {
     try {
@@ -53,27 +57,40 @@ async function handleCheckoutReturn() {
     } catch (error) {
       showOrdersBanner(error.message, true);
     }
+    return;
   }
 
-  if (checkout === "success") {
+  if (checkout === "success" && orderId) {
+    showOrdersBanner("Sprawdzamy płatność...", false);
+
+    // Backend pyta Stripe o stan sesji; zwykle wystarcza pierwsza próba.
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      try {
+        const order = await ordersApi(
+          `/api/orders/${encodeURIComponent(orderId)}/sync`,
+          "POST",
+        );
+
+        if (order.status !== "PENDING_PAYMENT") {
+          showOrdersBanner(
+            `✔ Zamówienie zostało złożone! Płatność za „${order.offerTitle}" została przyjęta. ` +
+              `Sprzedawca ma czas na wysyłkę do ${formatOrderDate(order.shipDeadline)}.`,
+            false,
+          );
+          return;
+        }
+      } catch (error) {
+        console.error("Synchronizacja płatności nie powiodła się:", error);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+
     showOrdersBanner(
-      "Dziękujemy! Płatność jest potwierdzana przez operatora - status zamówienia zaktualizuje się za chwilę.",
+      "Płatność jest jeszcze przetwarzana. Odśwież stronę za chwilę.",
       false,
     );
-
-    // Webhook może dotrzeć z kilkusekundowym opóźnieniem
-    let attempts = 0;
-    ordersRefreshTimer = setInterval(async () => {
-      attempts += 1;
-      await loadOrders();
-      if (attempts >= 8) {
-        clearInterval(ordersRefreshTimer);
-      }
-    }, 3000);
   }
-
-  // Czyścimy parametry, żeby odświeżenie strony nie powtórzyło akcji
-  window.history.replaceState({}, "", window.location.pathname);
 }
 
 async function loadOrders() {

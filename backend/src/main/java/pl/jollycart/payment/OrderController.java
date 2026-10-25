@@ -57,6 +57,12 @@ public class OrderController {
         return ResponseEntity.ok(orderService.cancelPending(authentication.getName(), id));
     }
 
+    @PostMapping("/{id}/sync")
+    public ResponseEntity<OrderResponse> sync(
+            @PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(orderService.syncPending(authentication.getName(), id));
+    }
+
     @PostMapping("/{id}/ship")
     public ResponseEntity<OrderResponse> ship(
             @PathVariable Long id, Authentication authentication) {

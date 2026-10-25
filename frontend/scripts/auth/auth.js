@@ -622,13 +622,6 @@ function displayLoggedUser(user) {
         }
 
         <a
-          href="payments.html"
-          class="account-menu-item"
-        >
-          Płatności
-        </a>
-
-        <a
           href="reviews.html"
           class="account-menu-item"
         >

@@ -519,6 +519,33 @@ public class OrderService {
         log.info("Zamówienie {}: brak reakcji kupującego - wypłata", order.getId());
     }
 
+        /* Sprawdza w Stripe, czy zamówienie zostało opłacone (gdy webhook jeszcze nie dotarł). */
+    @Transactional
+    public OrderResponse syncPending(String buyerEmail, Long orderId) {
+
+        User buyer = findUser(buyerEmail);
+        PurchaseOrder order = lockOrder(orderId);
+
+        requireBuyer(order, buyer);
+
+        if (order.getStatus() == OrderStatus.PENDING_PAYMENT
+                && order.getStripeSessionId() != null) {
+            try {
+                Session session = Session.retrieve(order.getStripeSessionId());
+
+                if ("complete".equals(session.getStatus())
+                        && "paid".equals(session.getPaymentStatus())) {
+                    applyPaid(order, session);
+                }
+            } catch (StripeException e) {
+                throw new PaymentGatewayException(
+                        "Nie udało się sprawdzić płatności.", e);
+            }
+        }
+
+        return toResponse(order, buyer.getId());
+    }
+
     // =====================================================================
     //  WNĘTRZE
     // =====================================================================
