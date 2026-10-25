@@ -30,6 +30,17 @@ public class PaymentController {
         );
     }
 
+    @PostMapping("/dashboard")
+    public ResponseEntity<Map<String, String>> openDashboard(
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                Map.of("url",
+                        sellerAccountService.createDashboardLink(
+                                authentication.getName()))
+        );
+    }
+
     @GetMapping("/status")
     public ResponseEntity<SellerStatusResponse> getStatus(
             Authentication authentication

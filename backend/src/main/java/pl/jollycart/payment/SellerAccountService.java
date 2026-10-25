@@ -7,8 +7,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
 import com.stripe.model.AccountLink;
+import com.stripe.model.LoginLink;
 import com.stripe.param.AccountCreateParams;
 import com.stripe.param.AccountLinkCreateParams;
+import com.stripe.model.LoginLink;
 
 import pl.jollycart.user.User;
 import pl.jollycart.user.UserRepository;
@@ -86,6 +88,34 @@ public class SellerAccountService {
         } catch (StripeException e) {
             throw new PaymentGatewayException(
                     "Nie udało się połączyć z operatorem płatności: " + e.getMessage(), e);
+        }
+    }
+
+        // Link do panelu Stripe, w którym sprzedawca zmienia konto bankowe do wypłat.
+    public String createDashboardLink(String email) {
+
+        StripeConfig.assertConfigured();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Użytkownik nie został znaleziony"));
+
+        SellerAccount seller = sellerAccountRepository
+                .findByUserId(user.getId())
+                .orElseThrow(() ->
+                        new IllegalStateException("Najpierw dodaj konto bankowe"));
+
+        try {
+            LoginLink link = LoginLink.createOnAccount(
+                    seller.getStripeAccountId(),
+                    new java.util.HashMap<String, Object>()
+            );
+
+            return link.getUrl();
+
+        } catch (StripeException e) {
+            throw new PaymentGatewayException(
+                    "Nie udało się otworzyć panelu konta: " + e.getMessage(), e);
         }
     }
 
