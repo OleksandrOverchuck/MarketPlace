@@ -65,6 +65,17 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getSales(authentication.getName()));
     }
 
+    @GetMapping("/unread-count")
+    public ResponseEntity<OrderService.UnreadOrders> unreadCount(Authentication authentication) {
+        return ResponseEntity.ok(orderService.countUnread(authentication.getName()));
+    }
+
+    @PostMapping("/mark-seen")
+    public ResponseEntity<Void> markSeen(Authentication authentication) {
+        orderService.markSeen(authentication.getName());
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/{id}/cancel")
     public ResponseEntity<OrderResponse> cancel(
             @PathVariable Long id, Authentication authentication) {

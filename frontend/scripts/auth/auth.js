@@ -550,6 +550,8 @@ function displayLoggedUser(user) {
       <span>Twoje konto</span>
 
       <span class="account-arrow"></span>
+
+      <span class="orders-dot orders-dot-button" hidden></span>
     </button>
 
     <div class="account-dropdown">
@@ -608,6 +610,7 @@ function displayLoggedUser(user) {
           class="account-menu-item"
         >
           Zamówienia
+          <span class="orders-dot" hidden></span>
         </a>
 
         ${
@@ -651,6 +654,56 @@ function displayLoggedUser(user) {
   setupAccountMenuToggle(authUserElement);
 
   setupNotifications();
+
+  setupOrdersDot();
+}
+
+/*
+   Czerwona kropka przy "Zamówienia": jest nowa sprzedaż (dla sprzedawcy)
+   albo przesyłka wysłana (dla kupującego). Gaśnie po wejściu w zamówienia.
+*/
+function setupOrdersDot() {
+  const link = document.querySelector('.account-menu-item[href="orders.html"]');
+  const dots = document.querySelectorAll(".orders-dot");
+
+  if (!link || dots.length === 0) {
+    return;
+  }
+
+  // Na stronie zamówień kropkę gasi sama strona (orders.js)
+  if (window.location.pathname.endsWith("/orders.html")) {
+    return;
+  }
+
+  const setDots = (visible) => {
+    dots.forEach((dot) => {
+      dot.hidden = !visible;
+    });
+  };
+
+  async function refreshOrdersDot() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/orders/unread-count`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+
+      setDots(Number(data.purchases) + Number(data.sales) > 0);
+    } catch (error) {
+      // brak kropki to nie błąd krytyczny
+    }
+  }
+
+  link.addEventListener("click", () => setDots(false));
+
+  refreshOrdersDot();
+  window.setInterval(refreshOrdersDot, 15000);
 }
 
 /*

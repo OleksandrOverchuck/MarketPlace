@@ -115,6 +115,13 @@ public class PurchaseOrder {
     @Column(name = "shipping_phone", length = 20)
     private String shippingPhone;
 
+    // Czerwona kropka przy "Zamówienia": są nowości, których użytkownik jeszcze nie widział
+    @Column(name = "buyer_unread", nullable = false, columnDefinition = "bit(1) default 0")
+    private boolean buyerUnread = false;
+
+    @Column(name = "seller_unread", nullable = false, columnDefinition = "bit(1) default 0")
+    private boolean sellerUnread = false;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -187,4 +194,8 @@ public class PurchaseOrder {
     public void setShippingPhone(String v) { this.shippingPhone = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public boolean isBuyerUnread() { return buyerUnread; }
+    public void setBuyerUnread(boolean v) { this.buyerUnread = v; }
+    public boolean isSellerUnread() { return sellerUnread; }
+    public void setSellerUnread(boolean v) { this.sellerUnread = v; }
 }

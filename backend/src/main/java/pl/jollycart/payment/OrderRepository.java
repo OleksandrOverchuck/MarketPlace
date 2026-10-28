@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -28,6 +29,20 @@ public interface OrderRepository extends JpaRepository<PurchaseOrder, Long> {
     List<PurchaseOrder> findBySellerIdOrderByCreatedAtDesc(Long sellerId);
 
     List<PurchaseOrder> findByStatusOrderByUpdatedAtAsc(OrderStatus status);
+
+    // --- czerwona kropka ---
+
+    long countByBuyerIdAndBuyerUnreadTrue(Long buyerId);
+
+    long countBySellerIdAndSellerUnreadTrue(Long sellerId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("update PurchaseOrder o set o.buyerUnread = false where o.buyerId = :userId and o.buyerUnread = true")
+    int clearBuyerUnread(@Param("userId") Long userId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("update PurchaseOrder o set o.sellerUnread = false where o.sellerId = :userId and o.sellerUnread = true")
+    int clearSellerUnread(@Param("userId") Long userId);
 
     // --- zapytania dla schedulera (tylko identyfikatory) ---
 

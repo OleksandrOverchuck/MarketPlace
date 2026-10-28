@@ -347,6 +347,9 @@ public class OrderService {
         order.setStatus(OrderStatus.SHIPPED);
         order.setShippedAt(LocalDateTime.now());
 
+        // Kupujący dowiaduje się o wysyłce -> czerwona kropka
+        order.setBuyerUnread(true);
+
         return toResponse(order, seller.getId());
     }
 
@@ -456,6 +459,26 @@ public class OrderService {
                 .stream()
                 .map(o -> toResponse(o, user.getId()))
                 .toList();
+    }
+
+    public record UnreadOrders(long purchases, long sales) {
+    }
+
+    @Transactional(readOnly = true)
+    public UnreadOrders countUnread(String email) {
+        User user = findUser(email);
+        return new UnreadOrders(
+                orderRepository.countByBuyerIdAndBuyerUnreadTrue(user.getId()),
+                orderRepository.countBySellerIdAndSellerUnreadTrue(user.getId())
+        );
+    }
+
+    /* Użytkownik wszedł w "Zamówienia" - gasimy czerwoną kropkę. */
+    @Transactional
+    public void markSeen(String email) {
+        User user = findUser(email);
+        orderRepository.clearBuyerUnread(user.getId());
+        orderRepository.clearSellerUnread(user.getId());
     }
 
     @Transactional(readOnly = true)
@@ -580,6 +603,9 @@ public class OrderService {
         order.setStatus(OrderStatus.PAID);
         order.setPaidAt(now);
         order.setShipDeadline(now.plusHours(shipHours));
+
+        // Sprzedawca ma nową sprzedaż do obsłużenia -> czerwona kropka
+        order.setSellerUnread(true);
 
         // Powiadomienie w aplikacji + mail dla sprzedawcy (po zatwierdzeniu transakcji).
         // Metoda wywoływana jest tylko przy przejściu PENDING_PAYMENT -> PAID,

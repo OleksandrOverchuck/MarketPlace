@@ -18,8 +18,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Link z powiadomienia / maila: orders.html?tab=sales otwiera "Moja sprzedaż"
   const requestedTab = new URLSearchParams(window.location.search).get("tab");
 
+  // Czego użytkownik jeszcze nie widział (czerwona kropka w menu)
+  let unread = { purchases: 0, sales: 0 };
+
+  try {
+    unread = await ordersApi("/api/orders/unread-count", "GET");
+  } catch (error) {
+    // niezalogowany itp. - obsłuży to loadOrders()
+  }
+
+  let initialTab = null;
+
   if (requestedTab === "sales" || requestedTab === "purchases") {
-    ordersTab = requestedTab;
+    initialTab = requestedTab;
+  } else if (unread.sales > 0 && unread.purchases === 0) {
+    // Nowość dotyczy tylko sprzedaży - od razu pokazujemy "Moja sprzedaż"
+    initialTab = "sales";
+  }
+
+  if (initialTab) {
+    ordersTab = initialTab;
     document.querySelectorAll("[data-orders-tab]").forEach((t) => {
       t.classList.toggle("is-active", t.dataset.ordersTab === ordersTab);
     });
@@ -41,6 +59,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await handleCheckoutReturn();
   await loadOrders();
+
+  // Wejście w zamówienia = nowości zobaczone, gaśnie czerwona kropka w menu
+  ordersApi("/api/orders/mark-seen", "POST").catch(() => {});
 });
 
 /* Powrót ze strony płatności Stripe: ?checkout=success|cancel&order=ID */

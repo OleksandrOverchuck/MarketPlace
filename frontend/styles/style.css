@@ -2449,3 +2449,32 @@ h3 {
   outline-offset: 2px;
   border-radius: 6px;
 }
+
+/* Czerwona kropka przy "Zamówienia" */
+.orders-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: var(--berry);
+  flex-shrink: 0;
+}
+
+.orders-dot[hidden] {
+  display: none;
+}
+
+.account-button {
+  position: relative;
+}
+
+.account-button .orders-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  margin: 0;
+  border: 2px solid #ffffff;
+}
