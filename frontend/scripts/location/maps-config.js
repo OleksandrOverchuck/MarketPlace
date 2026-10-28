@@ -1,18 +1,5 @@
-/*
- * KONFIGURACJA GOOGLE MAPS
- *
- * 1. Wklej tutaj swój klucz API (patrz instrukcja: Google Cloud Console).
- * 2. Klucz MUSI mieć ograniczenie "HTTP referrers" (np. http://localhost:5501/*
- *    oraz adres Twojej strony po wdrożeniu) i dostęp tylko do:
- *      - Maps JavaScript API
- *      - Places API (New)
- *      - Geocoding API
- *
- * Dopóki klucz to "WKLEJ_TUTAJ_KLUCZ_API", pola lokalizacji działają jak
- * zwykłe pola tekstowe (nic się nie psuje).
- */
 window.JOLLYCART_MAPS = {
-  apiKey: "WKLEJ_TUTAJ_KLUCZ_API",
+  apiKey: "AIzaSyAQmTOrWQ21OmNhibp6UWoo0lAA66f4djU",
 
   language: "pl",
 
