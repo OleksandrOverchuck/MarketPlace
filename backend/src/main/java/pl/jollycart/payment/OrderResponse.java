@@ -23,6 +23,11 @@ public record OrderResponse(
         LocalDateTime completedAt,
         String disputeReason,
         // Tylko dla kupującego w statusie PENDING_PAYMENT - "Dokończ płatność"
-        String checkoutUrl
+        String checkoutUrl,
+        // Dane do wysyłki - widoczne dla kupującego oraz (po opłaceniu) dla sprzedawcy
+        String shippingCity,
+        String shippingStreet,
+        String shippingPostalCode,
+        String shippingPhone
 ) {
 }

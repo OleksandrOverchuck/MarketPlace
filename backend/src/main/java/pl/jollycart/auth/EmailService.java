@@ -97,4 +97,56 @@ public class EmailService {
             );
         }
     }
+
+    public void sendOrderPaidNotification(
+            String to,
+            String sellerNickname,
+            String buyerNickname,
+            String offerTitle,
+            String amountText,
+            String shipWindow,
+            String shipDeadline,
+            String ordersUrl
+    ) {
+        StringBuilder body = new StringBuilder();
+
+        body.append("Cześć ").append(sellerNickname).append("!\n\n");
+        body.append(buyerNickname)
+                .append(" zapłacił(a) za Twój towar \u201E")
+                .append(offerTitle)
+                .append("\u201D (")
+                .append(amountText)
+                .append(") przez JollyCart.\n\n");
+        body.append("Masz ").append(shipWindow)
+                .append(" na wysyłkę towaru - do ").append(shipDeadline)
+                .append(".\n");
+        body.append("Jeśli towar nie zostanie wysłany w tym terminie, ")
+                .append("płatność zostanie zwrócona kupującemu.\n\n");
+        body.append("Dane do wysyłki (adres i telefon kupującego) znajdziesz ")
+                .append("w zakładce \u201EMoja sprzedaż\u201D:\n")
+                .append(ordersUrl).append("\n\n");
+        body.append("Pieniądze trafią do Ciebie po tym, jak kupujący ")
+                .append("potwierdzi odbiór towaru.");
+
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setFrom(from);
+        message.setTo(to);
+        // usuwamy znaki nowej linii - ochrona przed wstrzyknięciem nagłówków
+        message.setSubject(
+                "JollyCart - "
+                        + buyerNickname.replaceAll("[\\r\\n]", " ")
+                        + " zapłacił(a) za Twój towar"
+        );
+        message.setText(body.toString());
+
+        try {
+            mailSender.send(message);
+        } catch (MailException e) {
+            throw new EmailSendException(
+                    "Nie udało się wysłać wiadomości e-mail.",
+                    e
+            );
+        }
+    }
 }

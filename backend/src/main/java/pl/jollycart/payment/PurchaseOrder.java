@@ -102,6 +102,19 @@ public class PurchaseOrder {
     @Column(name = "dispute_reason", length = 500)
     private String disputeReason;
 
+    // Dane do wysyłki podane przez kupującego przed przejściem do Stripe
+    @Column(name = "shipping_city", length = 100)
+    private String shippingCity;
+
+    @Column(name = "shipping_street", length = 150)
+    private String shippingStreet;
+
+    @Column(name = "shipping_postal_code", length = 10)
+    private String shippingPostalCode;
+
+    @Column(name = "shipping_phone", length = 20)
+    private String shippingPhone;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -164,6 +177,14 @@ public class PurchaseOrder {
     public void setCompletedAt(LocalDateTime v) { this.completedAt = v; }
     public String getDisputeReason() { return disputeReason; }
     public void setDisputeReason(String v) { this.disputeReason = v; }
+    public String getShippingCity() { return shippingCity; }
+    public void setShippingCity(String v) { this.shippingCity = v; }
+    public String getShippingStreet() { return shippingStreet; }
+    public void setShippingStreet(String v) { this.shippingStreet = v; }
+    public String getShippingPostalCode() { return shippingPostalCode; }
+    public void setShippingPostalCode(String v) { this.shippingPostalCode = v; }
+    public String getShippingPhone() { return shippingPhone; }
+    public void setShippingPhone(String v) { this.shippingPhone = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

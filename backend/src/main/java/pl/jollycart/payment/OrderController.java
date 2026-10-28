@@ -18,7 +18,14 @@ import jakarta.validation.constraints.NotNull;
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    public record CheckoutRequest(@NotNull(message = "Brak oferty") Long offerId) {
+    // Adres dostawy jest walidowany w OrderService (czytelne komunikaty po polsku)
+    public record CheckoutRequest(
+            @NotNull(message = "Brak oferty") Long offerId,
+            String city,
+            String street,
+            String postalCode,
+            String phone
+    ) {
     }
 
     public record DisputeRequest(String reason) {
@@ -37,7 +44,14 @@ public class OrderController {
             Authentication authentication
     ) {
         return ResponseEntity.ok(
-                orderService.startCheckout(authentication.getName(), request.offerId())
+                orderService.startCheckout(
+                        authentication.getName(),
+                        request.offerId(),
+                        request.city(),
+                        request.street(),
+                        request.postalCode(),
+                        request.phone()
+                )
         );
     }
 

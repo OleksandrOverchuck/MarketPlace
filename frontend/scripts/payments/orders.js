@@ -15,6 +15,16 @@ let ordersTab = "purchases";
 let ordersRefreshTimer = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Link z powiadomienia / maila: orders.html?tab=sales otwiera "Moja sprzedaż"
+  const requestedTab = new URLSearchParams(window.location.search).get("tab");
+
+  if (requestedTab === "sales" || requestedTab === "purchases") {
+    ordersTab = requestedTab;
+    document.querySelectorAll("[data-orders-tab]").forEach((t) => {
+      t.classList.toggle("is-active", t.dataset.ordersTab === ordersTab);
+    });
+  }
+
   document.querySelectorAll("[data-orders-tab]").forEach((tab) => {
     tab.addEventListener("click", () => {
       ordersTab = tab.dataset.ordersTab;
@@ -156,6 +166,8 @@ function renderOrderCard(order) {
     lines.push(`Zakończono ${formatOrderDate(order.completedAt)}.`);
   }
 
+  const shippingBlock = renderShippingBlock(order, isBuyer);
+
   return `
     <article class="order-card" data-order-id="${order.id}">
       <div class="order-card-top">
@@ -175,8 +187,31 @@ function renderOrderCard(order) {
 
       ${lines.map((l) => `<p class="order-note">${escapeOrdersHtml(l)}</p>`).join("")}
 
+      ${shippingBlock}
+
       <div class="order-actions">${renderOrderActions(order, isBuyer)}</div>
     </article>
+  `;
+}
+
+/* Dane do wysyłki: sprzedawca widzi adres kupującego, kupujący - swój adres. */
+function renderShippingBlock(order, isBuyer) {
+  if (!order.shippingStreet && !order.shippingCity) {
+    return "";
+  }
+
+  const heading = isBuyer ? "Twój adres dostawy" : "Dane do wysyłki";
+  const row = (label, value) =>
+    `<div class="order-shipping-row"><span>${label}</span><strong>${escapeOrdersHtml(value)}</strong></div>`;
+
+  return `
+    <div class="order-shipping">
+      <h3>${heading}</h3>
+      ${isBuyer ? "" : row("Odbiorca", order.buyerNickname)}
+      ${row("Ulica", order.shippingStreet)}
+      ${row("Kod pocztowy i miasto", `${order.shippingPostalCode || ""} ${order.shippingCity || ""}`.trim())}
+      ${row("Telefon", order.shippingPhone)}
+    </div>
   `;
 }
 

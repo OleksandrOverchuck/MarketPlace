@@ -9,6 +9,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +60,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final SellerAccountRepository sellerAccountRepository;
     private final SellerAccountService sellerAccountService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final String frontendUrl;
     private final String currency;
@@ -73,6 +75,7 @@ public class OrderService {
             UserRepository userRepository,
             SellerAccountRepository sellerAccountRepository,
             SellerAccountService sellerAccountService,
+            ApplicationEventPublisher eventPublisher,
             @Value("${app.frontend-url}") String frontendUrl,
             @Value("${app.payment.currency:pln}") String currency,
             @Value("${app.payment.checkout-minutes:30}") long checkoutMinutes,
@@ -85,6 +88,7 @@ public class OrderService {
         this.userRepository = userRepository;
         this.sellerAccountRepository = sellerAccountRepository;
         this.sellerAccountService = sellerAccountService;
+        this.eventPublisher = eventPublisher;
         this.frontendUrl = frontendUrl;
         this.currency = currency.toLowerCase();
         // Stripe wymaga wygaśnięcia sesji najwcześniej za 30 minut
@@ -106,9 +110,19 @@ public class OrderService {
      * więc przy dwóch równoczesnych kliknięciach "Kup" drugi dostanie błąd.
      */
     @Transactional
-    public OrderResponse startCheckout(String buyerEmail, Long offerId) {
+    public OrderResponse startCheckout(
+            String buyerEmail,
+            Long offerId,
+            String city,
+            String street,
+            String postalCode,
+            String phone
+    ) {
 
         StripeConfig.assertConfigured();
+
+        // Adres dostawy sprawdzamy na samym początku - zanim zarezerwujemy ofertę
+        ShippingData shipping = validateShipping(city, street, postalCode, phone);
 
         User buyer = userRepository.findByEmail(buyerEmail)
                 .orElseThrow(() ->
@@ -158,6 +172,10 @@ public class OrderService {
         order.setCurrency(currency);
         order.setStatus(OrderStatus.PENDING_PAYMENT);
         order.setCheckoutExpiresAt(LocalDateTime.now().plusMinutes(checkoutMinutes));
+        order.setShippingCity(shipping.city());
+        order.setShippingStreet(shipping.street());
+        order.setShippingPostalCode(shipping.postalCode());
+        order.setShippingPhone(shipping.phone());
         order = orderRepository.save(order);
 
         offer.setStatus(OfferStatus.RESERVED);
@@ -562,6 +580,20 @@ public class OrderService {
         order.setStatus(OrderStatus.PAID);
         order.setPaidAt(now);
         order.setShipDeadline(now.plusHours(shipHours));
+
+        // Powiadomienie w aplikacji + mail dla sprzedawcy (po zatwierdzeniu transakcji).
+        // Metoda wywoływana jest tylko przy przejściu PENDING_PAYMENT -> PAID,
+        // więc sprzedawca dostaje dokładnie jedną wiadomość na zamówienie.
+        eventPublisher.publishEvent(new OrderPaidEvent(
+                order.getId(),
+                order.getSellerId(),
+                order.getBuyerId(),
+                order.getOfferTitle(),
+                order.getAmount(),
+                order.getCurrency(),
+                order.getShipDeadline(),
+                shipHours
+        ));
     }
 
     /*
@@ -707,6 +739,55 @@ public class OrderService {
         }
     }
 
+    private record ShippingData(
+            String city,
+            String street,
+            String postalCode,
+            String phone
+    ) {
+    }
+
+    /* Sprawdza i normalizuje adres dostawy podany przed płatnością. */
+    private ShippingData validateShipping(
+            String city,
+            String street,
+            String postalCode,
+            String phone
+    ) {
+        String c = city == null ? "" : city.trim();
+        String s = street == null ? "" : street.trim();
+
+        if (c.isEmpty()) {
+            throw new IllegalArgumentException("Podaj miasto");
+        }
+        if (c.length() > 100) {
+            throw new IllegalArgumentException("Nazwa miasta jest za długa");
+        }
+        if (s.isEmpty()) {
+            throw new IllegalArgumentException("Podaj ulicę i numer domu");
+        }
+        if (s.length() > 150) {
+            throw new IllegalArgumentException("Nazwa ulicy jest za długa");
+        }
+
+        String postal = postalCode == null ? "" : postalCode.replaceAll("\\s", "");
+        if (postal.matches("\\d{5}")) {
+            postal = postal.substring(0, 2) + "-" + postal.substring(2);
+        }
+        if (!postal.matches("\\d{2}-\\d{3}")) {
+            throw new IllegalArgumentException(
+                    "Podaj kod pocztowy w formacie 00-000");
+        }
+
+        String ph = phone == null ? "" : phone.replaceAll("[\\s\\-()]", "");
+        if (!ph.matches("\\+?\\d{9,15}")) {
+            throw new IllegalArgumentException(
+                    "Podaj poprawny numer telefonu (np. 600 123 456)");
+        }
+
+        return new ShippingData(c, s, postal, ph);
+    }
+
     // Stripe liczy w groszach: 12,34 zł -> 1234
     private long toMinorUnits(BigDecimal amount) {
         return amount.movePointRight(2)
@@ -722,6 +803,15 @@ public class OrderService {
                 .map(User::getNickname).orElse("(usunięty użytkownik)");
 
         boolean viewerIsBuyer = viewerId != null && viewerId.equals(o.getBuyerId());
+        boolean viewerIsSeller = viewerId != null && viewerId.equals(o.getSellerId());
+
+        // Sprzedawca widzi adres dopiero, gdy zamówienie jest opłacone
+        // i nie zostało zwrócone / anulowane.
+        boolean showAddress = viewerIsBuyer
+                || (viewerIsSeller && switch (o.getStatus()) {
+                    case PAID, SHIPPED, DELIVERED, DISPUTED, COMPLETED -> true;
+                    default -> false;
+                });
 
         return new OrderResponse(
                 o.getId(),
@@ -744,7 +834,11 @@ public class OrderService {
                 o.getDisputeReason(),
                 viewerIsBuyer && o.getStatus() == OrderStatus.PENDING_PAYMENT
                         ? o.getStripeCheckoutUrl()
-                        : null
+                        : null,
+                showAddress ? o.getShippingCity() : null,
+                showAddress ? o.getShippingStreet() : null,
+                showAddress ? o.getShippingPostalCode() : null,
+                showAddress ? o.getShippingPhone() : null
         );
     }
 }
