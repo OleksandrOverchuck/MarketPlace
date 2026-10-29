@@ -3,6 +3,8 @@ package pl.jollycart.offer.dto;
 import java.math.BigDecimal;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -45,7 +47,17 @@ public record UpdateOfferRequest(
         Long categoryId,
 
         // Płatność przez JollyCart (opcjonalna, tylko dla typu SALE)
-        Boolean onlinePaymentEnabled
+        Boolean onlinePaymentEnabled,
+
+        // Orientacyjny obszar lokalizacji (opcjonalny) - pokazywany na mapie.
+        // Zakres współrzędnych sprawdza OfferService.applyLocationArea.
+        Double latitude,
+
+        Double longitude,
+
+        @Min(value = 0, message = "Nieprawidłowy promień obszaru")
+        @Max(value = 100000, message = "Nieprawidłowy promień obszaru")
+        Integer locationRadiusMeters
 ) {
 
     public UpdateOfferRequest(
@@ -57,6 +69,22 @@ public record UpdateOfferRequest(
             OfferStatus status,
             Long categoryId
     ) {
-        this(title, description, price, location, type, status, categoryId, null);
+        this(title, description, price, location, type, status, categoryId,
+                null, null, null, null);
+    }
+
+    // Zgodność z wywołaniem bez współrzędnych.
+    public UpdateOfferRequest(
+            String title,
+            String description,
+            BigDecimal price,
+            String location,
+            OfferType type,
+            OfferStatus status,
+            Long categoryId,
+            Boolean onlinePaymentEnabled
+    ) {
+        this(title, description, price, location, type, status, categoryId,
+                onlinePaymentEnabled, null, null, null);
     }
 }

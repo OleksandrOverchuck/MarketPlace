@@ -534,16 +534,22 @@
 }
 
 .od-price {
-  font-family: "Zilla Slab", Georgia, serif;
-  font-size: 44px;
+  /* Work Sans ma równe cyfry (lining), tak jak cena na kartach ogłoszeń.
+     Zilla Slab miał cyfry o różnej wysokości i cena wyglądała krzywo. */
+  font-family: "Work Sans", Arial, sans-serif;
+  font-size: 40px;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+
+  font-variant-numeric: lining-nums tabular-nums;
 
   color: var(--ink);
 }
 
 .od-price.is-negotiable {
-  font-size: 26px;
+  font-size: 24px;
+  letter-spacing: 0;
 
   color: var(--ink-soft);
 }
@@ -889,6 +895,179 @@
 }
 
 /* =========================
+   MAPA LOKALIZACJI
+   ========================= */
+
+.od-map {
+  padding: 30px 34px;
+}
+
+.od-map h2 {
+  margin: 0 0 8px;
+
+  font-size: 25px;
+}
+
+.od-map-caption {
+  max-width: 62ch;
+
+  margin: 0 0 18px;
+
+  color: var(--ink-soft);
+
+  line-height: 1.6;
+}
+
+.od-map-stage {
+  position: relative;
+
+  height: 340px;
+
+  overflow: hidden;
+
+  background: var(--paper-deep);
+
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.od-map-stage[hidden] {
+  display: none;
+}
+
+.od-map-stage.is-live {
+  background: var(--white);
+}
+
+.od-map-placeholder {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+
+  padding: 20px;
+
+  text-align: center;
+
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 44px 44px;
+  background-position: -1px -1px;
+}
+
+.od-map-placeholder > svg {
+  width: 40px;
+  height: 40px;
+
+  fill: none;
+  stroke: var(--teal);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.od-map-button {
+  padding: 13px 26px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: var(--teal-dark);
+
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow: 0 8px 18px rgba(9, 63, 56, 0.22);
+
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.od-map-button:hover {
+  background: var(--teal);
+}
+
+.od-map-button:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.od-map-button:disabled {
+  background: var(--ink-soft);
+
+  cursor: progress;
+
+  box-shadow: none;
+}
+
+.od-map-status {
+  margin: 0;
+
+  padding: 8px 12px;
+
+  background: var(--white);
+
+  border: 1px solid var(--line);
+  border-radius: 8px;
+
+  color: var(--berry);
+
+  font-size: 14px;
+}
+
+.od-map-status[hidden] {
+  display: none;
+}
+
+.od-map-link {
+  display: inline-block;
+
+  margin-top: 14px;
+
+  color: var(--teal);
+
+  font-weight: 600;
+}
+
+.od-map-link:hover {
+  color: var(--teal-dark);
+
+  text-decoration: underline;
+}
+
+.od-map-link:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .od-map {
+    padding: 24px 20px;
+  }
+
+  .od-map-stage {
+    height: 280px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .od-map-button {
+    transition: none;
+  }
+}
+
+/* =========================
    LOADING / ERROR
    ========================= */
 
@@ -945,7 +1124,7 @@
   }
 
   .od-price {
-    font-size: 38px;
+    font-size: 34px;
   }
 
   .od-description,

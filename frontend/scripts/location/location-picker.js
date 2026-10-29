@@ -115,6 +115,122 @@
   }
 
   /* =========================
+     OBSZAR LOKALIZACJI (mapa na stronie ogłoszenia)
+     ========================= */
+
+  // Po wyborze miejscowości zapisujemy na polu orientacyjny środek i promień
+  // obszaru (data-place-*). Formularze wysyłają je razem z ogłoszeniem.
+  // data-place-for to tekst, do którego należą współrzędne - jeśli ktoś
+  // potem ręcznie zmieni tekst, współrzędne przestają być ważne.
+  const MIN_AREA_RADIUS = 800;
+  const MAX_AREA_RADIUS = 50000;
+  const DEFAULT_AREA_RADIUS = 2000;
+
+  // Trwające pobieranie obszaru dla danego pola (żeby formularz mógł poczekać).
+  const pendingAreas = new WeakMap();
+
+  function roundCoord(value) {
+    return Math.round(value * 10000) / 10000;
+  }
+
+  function distanceMeters(a, b) {
+    const R = 6371000;
+    const toRad = (deg) => (deg * Math.PI) / 180;
+
+    const dLat = toRad(b.lat() - a.lat());
+    const dLng = toRad(b.lng() - a.lng());
+
+    const h =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(a.lat())) *
+        Math.cos(toRad(b.lat())) *
+        Math.sin(dLng / 2) ** 2;
+
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+
+  function radiusFromViewport(viewport) {
+    if (!viewport) {
+      return DEFAULT_AREA_RADIUS;
+    }
+
+    const diagonal = distanceMeters(
+      viewport.getNorthEast(),
+      viewport.getSouthWest(),
+    );
+
+    const radius = Math.round(diagonal / 2);
+
+    return Math.min(Math.max(radius, MIN_AREA_RADIUS), MAX_AREA_RADIUS);
+  }
+
+  function areaFromGeometry(geometry) {
+    if (!geometry || !geometry.location) {
+      return null;
+    }
+
+    return {
+      lat: roundCoord(geometry.location.lat()),
+      lng: roundCoord(geometry.location.lng()),
+      radius: radiusFromViewport(geometry.viewport),
+    };
+  }
+
+  async function fetchAreaForPrediction(prediction) {
+    const place = prediction.toPlace();
+
+    await place.fetchFields({ fields: ["location", "viewport"] });
+
+    return areaFromGeometry({
+      location: place.location,
+      viewport: place.viewport,
+    });
+  }
+
+  function setArea(input, text, area) {
+    const normalized = String(text || "").trim();
+
+    if (!area || !normalized) {
+      clearArea(input);
+
+      return;
+    }
+
+    input.dataset.placeFor = normalized;
+    input.dataset.placeLat = String(area.lat);
+    input.dataset.placeLng = String(area.lng);
+    input.dataset.placeRadius = String(area.radius);
+  }
+
+  function clearArea(input) {
+    delete input.dataset.placeFor;
+    delete input.dataset.placeLat;
+    delete input.dataset.placeLng;
+    delete input.dataset.placeRadius;
+  }
+
+  function trackArea(input, promise) {
+    const tracked = promise.catch((error) => {
+      console.error("Nie udało się pobrać obszaru lokalizacji:", error);
+
+      clearArea(input);
+    });
+
+    pendingAreas.set(input, tracked);
+
+    return tracked;
+  }
+
+  // Dla formularzy: poczekaj, aż skończy się pobieranie obszaru po wyborze miasta.
+  window.JollyCartLocationPicker = {
+    whenReady(input) {
+      return input && pendingAreas.get(input)
+        ? pendingAreas.get(input)
+        : Promise.resolve();
+    },
+  };
+
+  /* =========================
      GEOLOKALIZACJA
      ========================= */
 
@@ -174,7 +290,16 @@
         );
 
         if (component) {
-          return component.long_name;
+          // Obszar bierzemy z wyniku o typie miejscowości, a nie z adresu
+          // ulicy - żeby nie zapisać dokładnego miejsca, w którym stoi osoba.
+          const areaResult = (results || []).find((item) =>
+            (item.types || []).includes(type),
+          );
+
+          return {
+            name: component.long_name,
+            area: areaResult ? areaFromGeometry(areaResult.geometry) : null,
+          };
         }
       }
     }
@@ -227,6 +352,7 @@
           prediction.text.text,
         secondary:
           (prediction.secondaryText && prediction.secondaryText.text) || "",
+        prediction,
       }));
   }
 
@@ -248,6 +374,7 @@
       debounceTimer: null,
       requestId: 0,
       busy: false,
+      suppressInput: false,
     };
 
     const wrapper = document.createElement("div");
@@ -288,8 +415,14 @@
     function setValue(value) {
       input.value = value;
 
+      // Wpisanie wartości przez kod nie ma uruchamiać kolejnego wyszukiwania
+      // (to byłoby zbędne, płatne zapytanie do Google).
+      state.suppressInput = true;
+
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
+
+      state.suppressInput = false;
     }
 
     function closeList() {
@@ -420,6 +553,17 @@
 
       setValue(row.main);
 
+      // Obszar miejscowości (środek + promień) pobieramy w tle; formularz
+      // czeka na to przy wysyłaniu (JollyCartLocationPicker.whenReady).
+      clearArea(input);
+
+      trackArea(
+        input,
+        fetchAreaForPrediction(row.prediction).then((area) =>
+          setArea(input, row.main, area),
+        ),
+      );
+
       // Po wybraniu miejsca kończy się "sesja" Google - następna dostanie nowy token.
       state.sessionToken = null;
 
@@ -467,6 +611,10 @@
     }
 
     function handleInput() {
+      if (state.suppressInput) {
+        return;
+      }
+
       clearTimeout(state.debounceTimer);
 
       const text = input.value.trim();
@@ -512,9 +660,9 @@
           lng: position.coords.longitude,
         };
 
-        const city = await reverseGeocodeCity(userCoords);
+        const place = await reverseGeocodeCity(userCoords);
 
-        if (!city) {
+        if (!place) {
           renderList(
             [],
             "Nie udało się rozpoznać miejscowości. Wpisz ją ręcznie.",
@@ -524,7 +672,9 @@
           return;
         }
 
-        setValue(city);
+        setValue(place.name);
+
+        setArea(input, place.name, place.area);
 
         state.sessionToken = null;
 

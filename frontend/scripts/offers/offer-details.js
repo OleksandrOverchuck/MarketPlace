@@ -50,6 +50,11 @@ async function loadOfferDetails() {
     setupOfferGallery(root);
     setupImageLightbox(root);
 
+    // Mapa lokalizacji (scripts/location/offer-map.js) - ładuje się po kliknięciu.
+    if (window.JollyCartOfferMap) {
+      window.JollyCartOfferMap.setup(root);
+    }
+
     // Przycisk wiadomości musi być podpięty dopiero
     // po wyrenderowaniu HTML-a ogłoszenia.
     await setupMessageButton(offer);
@@ -631,6 +636,7 @@ function renderOfferDetails(root, offer, images) {
   const sellerName = offer.nickname || "Użytkownik";
   const sellerInitial = sellerName.trim().charAt(0).toUpperCase() || "U";
   const statusNotice = getDetailsStatusNotice(offer.status);
+  const mapHtml = buildOfferMapHtml(offer);
 
   // Numer z profilu ogłaszającego - pokazujemy tylko, jeśli go podał.
   const sellerPhone = offer.sellerPhone ? String(offer.sellerPhone).trim() : "";
@@ -906,8 +912,65 @@ function renderOfferDetails(root, offer, images) {
             </div>
           </dl>
         </section>
+
+        ${mapHtml}
       </div>
     </div>
+  `;
+}
+
+// Karta z mapą pokazuje się tylko dla ogłoszeń, które mają zapisany obszar
+// (wybrany z podpowiedzi Google). Starsze ogłoszenia jej nie mają.
+function buildOfferMapHtml(offer) {
+  if (!offer.location || offer.latitude == null || offer.longitude == null) {
+    return "";
+  }
+
+  const latitude = Number(offer.latitude);
+  const longitude = Number(offer.longitude);
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return "";
+  }
+
+  const radius = Number(offer.locationRadiusMeters);
+  const safeRadius = Number.isFinite(radius) && radius > 0 ? radius : 2000;
+
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+
+  return `
+    <section
+      class="od-card od-map"
+      data-lat="${latitude}"
+      data-lng="${longitude}"
+      data-radius="${safeRadius}"
+    >
+      <h2>Na mapie</h2>
+
+      <p class="od-map-caption">
+        Zaznaczony obszar to ${escapeDetailsHtml(offer.location)}.
+        Jest orientacyjny: dokładne miejsce ustalisz z ogłaszającym.
+      </p>
+
+      <div class="od-map-stage">
+        <div class="od-map-placeholder">
+          ${DETAILS_ICONS.pin}
+
+          <button type="button" class="od-map-button">Pokaż na mapie</button>
+
+          <p class="od-map-status" role="status" hidden></p>
+        </div>
+      </div>
+
+      <a
+        class="od-map-link"
+        href="${mapsUrl}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Otwórz w Google Maps
+      </a>
+    </section>
   `;
 }
 

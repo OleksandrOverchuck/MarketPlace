@@ -40,7 +40,14 @@ public record OfferResponse(
 
         LocalDateTime updatedAt,
 
-        boolean onlinePaymentEnabled
+        boolean onlinePaymentEnabled,
+
+        // Orientacyjny obszar lokalizacji do pokazania na mapie (null = brak).
+        Double latitude,
+
+        Double longitude,
+
+        Integer locationRadiusMeters
 ) {
 
     public static OfferResponse from(Offer offer) {
@@ -60,7 +67,10 @@ public record OfferResponse(
                 offer.getCategory().getName(),
                 offer.getCreatedAt(),
                 offer.getUpdatedAt(),
-                offer.isOnlinePaymentEnabled()
+                offer.isOnlinePaymentEnabled(),
+                offer.getLocationLatitude(),
+                offer.getLocationLongitude(),
+                offer.getLocationRadiusMeters()
         );
     }
 }

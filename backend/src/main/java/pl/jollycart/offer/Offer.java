@@ -39,6 +39,17 @@ public class Offer {
     @Column(length = 150)
     private String location;
 
+    // Orientacyjny punkt i promien obszaru lokalizacji (np. srodek miejscowosci).
+    // Null = ogloszenie bez mapy (np. stare ogloszenia lub reczny wpis tekstu).
+    @Column(name = "location_latitude")
+    private Double locationLatitude;
+
+    @Column(name = "location_longitude")
+    private Double locationLongitude;
+
+    @Column(name = "location_radius_meters")
+    private Integer locationRadiusMeters;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private OfferType type;
@@ -125,6 +136,30 @@ public class Offer {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public Double getLocationLatitude() {
+        return locationLatitude;
+    }
+
+    public void setLocationLatitude(Double locationLatitude) {
+        this.locationLatitude = locationLatitude;
+    }
+
+    public Double getLocationLongitude() {
+        return locationLongitude;
+    }
+
+    public void setLocationLongitude(Double locationLongitude) {
+        this.locationLongitude = locationLongitude;
+    }
+
+    public Integer getLocationRadiusMeters() {
+        return locationRadiusMeters;
+    }
+
+    public void setLocationRadiusMeters(Integer locationRadiusMeters) {
+        this.locationRadiusMeters = locationRadiusMeters;
     }
 
     public OfferType getType() {

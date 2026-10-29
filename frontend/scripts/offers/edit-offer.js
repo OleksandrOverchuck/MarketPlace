@@ -65,7 +65,20 @@ async function loadOfferForEdit() {
     document.getElementById("status").value = data.status || "ACTIVE";
     document.getElementById("category").value = String(data.categoryId ?? "");
     document.getElementById("price").value = data.price ?? "";
-    document.getElementById("location").value = data.location || "";
+    const locationField = document.getElementById("location");
+
+    locationField.value = data.location || "";
+
+    // Zapisany obszar mapy zostaje, dopóki ktoś nie zmieni tekstu lokalizacji.
+    if (data.location && data.latitude != null && data.longitude != null) {
+      locationField.dataset.placeFor = data.location.trim();
+      locationField.dataset.placeLat = String(data.latitude);
+      locationField.dataset.placeLng = String(data.longitude);
+
+      if (data.locationRadiusMeters != null) {
+        locationField.dataset.placeRadius = String(data.locationRadiusMeters);
+      }
+    }
     setOnlinePaymentValue(Boolean(data.onlinePaymentEnabled));
     updateCounters();
     await loadExistingImages();
@@ -75,8 +88,52 @@ async function loadOfferForEdit() {
   }
 }
 
+// Współrzędne wybranej miejscowości zapisuje na polu location-picker.js
+// (data-place-*). Ważne są tylko wtedy, gdy tekst w polu nadal jest tym,
+// który wybrano z podpowiedzi - po ręcznej zmianie tekstu wysyłamy null.
+function readLocationArea(input, locationText) {
+  const empty = {
+    latitude: null,
+    longitude: null,
+    locationRadiusMeters: null,
+  };
+
+  if (!input || !locationText) {
+    return empty;
+  }
+
+  const data = input.dataset;
+
+  if (
+    data.placeFor !== locationText ||
+    data.placeLat === undefined ||
+    data.placeLng === undefined
+  ) {
+    return empty;
+  }
+
+  const latitude = Number(data.placeLat);
+  const longitude = Number(data.placeLng);
+  const radius = Number(data.placeRadius);
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return empty;
+  }
+
+  return {
+    latitude,
+    longitude,
+    locationRadiusMeters: Number.isFinite(radius) ? Math.round(radius) : null,
+  };
+}
+
 async function updateOffer(event) {
   event.preventDefault();
+
+  // Jeśli ktoś dopiero co wybrał miasto z podpowiedzi, poczekaj na obszar mapy.
+  const locationInput = document.getElementById("location");
+
+  await window.JollyCartLocationPicker?.whenReady(locationInput);
 
   if (!loadedOffer) {
     showEditOfferMessage("Ogłoszenie nie zostało jeszcze załadowane.", true);
@@ -89,7 +146,8 @@ async function updateOffer(event) {
   const status = document.getElementById("status").value;
   const categoryId = document.getElementById("category").value;
   const priceInput = document.getElementById("price").value.trim();
-  const location = document.getElementById("location")?.value.trim() || null;
+  const location = locationInput?.value.trim() || null;
+  const locationArea = readLocationArea(locationInput, location);
   const imageFiles = Array.from(document.getElementById("image")?.files || []);
   const button = document.getElementById("edit-offer-submit");
 
@@ -120,6 +178,9 @@ async function updateOffer(event) {
         description,
         price,
         location,
+        latitude: locationArea.latitude,
+        longitude: locationArea.longitude,
+        locationRadiusMeters: locationArea.locationRadiusMeters,
         type,
         status,
         categoryId: Number(categoryId),

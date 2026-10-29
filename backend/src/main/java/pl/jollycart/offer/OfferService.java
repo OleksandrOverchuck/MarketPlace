@@ -86,6 +86,42 @@ public class OfferService {
         return true;
     }
 
+    /*
+     * Orientacyjny obszar lokalizacji (do mapy na stronie ogłoszenia).
+     * Zapisujemy go tylko wtedy, gdy podano tekst lokalizacji oraz komplet
+     * współrzędnych. W przeciwnym razie czyścimy go, żeby nie zostały
+     * współrzędne po zmianie lub usunięciu lokalizacji.
+     */
+    private void applyLocationArea(
+            Offer offer,
+            Double latitude,
+            Double longitude,
+            Integer radiusMeters
+    ) {
+        boolean hasLocationText = offer.getLocation() != null
+                && !offer.getLocation().isBlank();
+
+        boolean valid = hasLocationText
+                && latitude != null
+                && longitude != null
+                && Double.isFinite(latitude)
+                && Double.isFinite(longitude)
+                && latitude >= -90 && latitude <= 90
+                && longitude >= -180 && longitude <= 180;
+
+        if (!valid) {
+            offer.setLocationLatitude(null);
+            offer.setLocationLongitude(null);
+            offer.setLocationRadiusMeters(null);
+
+            return;
+        }
+
+        offer.setLocationLatitude(latitude);
+        offer.setLocationLongitude(longitude);
+        offer.setLocationRadiusMeters(radiusMeters);
+    }
+
     public OfferResponse createOffer(
             String currentEmail,
             CreateOfferRequest request
@@ -113,6 +149,12 @@ public class OfferService {
         offer.setDescription(request.description());
         offer.setPrice(request.price());
         offer.setLocation(request.location());
+        applyLocationArea(
+                offer,
+                request.latitude(),
+                request.longitude(),
+                request.locationRadiusMeters()
+        );
         offer.setType(request.type());
         offer.setStatus(OfferStatus.ACTIVE);
         offer.setUser(user);
@@ -406,6 +448,12 @@ public class OfferService {
         offer.setDescription(request.description());
         offer.setPrice(request.price());
         offer.setLocation(request.location());
+        applyLocationArea(
+                offer,
+                request.latitude(),
+                request.longitude(),
+                request.locationRadiusMeters()
+        );
         offer.setType(request.type());
         offer.setStatus(request.status());
         offer.setCategory(category);

@@ -139,15 +139,60 @@ async function loadCategories() {
   }
 }
 
+// Współrzędne wybranej miejscowości zapisuje na polu location-picker.js
+// (data-place-*). Ważne są tylko wtedy, gdy tekst w polu nadal jest tym,
+// który wybrano z podpowiedzi - po ręcznej zmianie tekstu wysyłamy null.
+function readLocationArea(input, locationText) {
+  const empty = {
+    latitude: null,
+    longitude: null,
+    locationRadiusMeters: null,
+  };
+
+  if (!input || !locationText) {
+    return empty;
+  }
+
+  const data = input.dataset;
+
+  if (
+    data.placeFor !== locationText ||
+    data.placeLat === undefined ||
+    data.placeLng === undefined
+  ) {
+    return empty;
+  }
+
+  const latitude = Number(data.placeLat);
+  const longitude = Number(data.placeLng);
+  const radius = Number(data.placeRadius);
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return empty;
+  }
+
+  return {
+    latitude,
+    longitude,
+    locationRadiusMeters: Number.isFinite(radius) ? Math.round(radius) : null,
+  };
+}
+
 async function handleCreateOffer(event) {
   event.preventDefault();
+
+  // Jeśli ktoś dopiero co wybrał miasto z podpowiedzi, poczekaj na obszar mapy.
+  const locationInput = document.getElementById("location");
+
+  await window.JollyCartLocationPicker?.whenReady(locationInput);
 
   const title = document.getElementById("title").value.trim();
   const description = document.getElementById("description").value.trim();
   const type = document.getElementById("type").value;
   const categoryId = document.getElementById("category").value;
   const priceInput = document.getElementById("price").value.trim();
-  const location = document.getElementById("location")?.value.trim() || null;
+  const location = locationInput?.value.trim() || null;
+  const locationArea = readLocationArea(locationInput, location);
   const submitButton = document.getElementById("post-ad-submit");
 
   if (!title) {
@@ -202,6 +247,9 @@ async function handleCreateOffer(event) {
         description,
         price,
         location,
+        latitude: locationArea.latitude,
+        longitude: locationArea.longitude,
+        locationRadiusMeters: locationArea.locationRadiusMeters,
         type,
         categoryId: Number(categoryId),
         onlinePaymentEnabled: getOnlinePaymentValue(),

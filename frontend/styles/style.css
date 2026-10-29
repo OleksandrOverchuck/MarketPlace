@@ -2068,7 +2068,9 @@ h3 {
   position: absolute;
 
   top: calc(100% + 10px);
-  right: 0;
+
+  /* Wyśrodkowany pod przyciskiem "Przeglądaj" */
+  left: 50%;
 
   width: 220px;
 
@@ -2085,7 +2087,7 @@ h3 {
   opacity: 0;
   visibility: hidden;
 
-  transform: translateY(-8px);
+  transform: translateX(-50%) translateY(-8px);
 
   transition:
     opacity 0.18s ease,
@@ -2111,7 +2113,7 @@ h3 {
   opacity: 1;
   visibility: visible;
 
-  transform: translateY(0);
+  transform: translateX(-50%) translateY(0);
 }
 
 /* =========================================================
@@ -2374,6 +2376,10 @@ h3 {
 
   .nav-dropdown-menu::before {
     display: none;
+  }
+
+  .nav-dropdown:hover .nav-dropdown-menu {
+    transform: none;
   }
 }
 
