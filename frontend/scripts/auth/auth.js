@@ -480,10 +480,34 @@ async function loadActiveOffersCount() {
 
     const count = await response.json();
 
-    countElement.textContent = Number(count).toLocaleString("pl-PL");
+    animateCount(countElement, Number(count));
   } catch (error) {
     console.error("Błąd pobierania liczby aktywnych ogłoszeń:", error);
   }
+}
+
+// Płynne "dolicz" od 0 do wartości docelowej.
+function animateCount(element, target) {
+  if (!Number.isFinite(target) || target <= 0) {
+    element.textContent = "0";
+    return;
+  }
+
+  const duration = 800;
+  const start = performance.now();
+
+  function step(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+
+    element.textContent = Math.round(target * eased).toLocaleString("pl-PL");
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
+  }
+
+  requestAnimationFrame(step);
 }
 
 async function loadCurrentUser() {

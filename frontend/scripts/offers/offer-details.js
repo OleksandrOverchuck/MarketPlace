@@ -1007,78 +1007,16 @@ async function setupMessageButton(offer) {
      * WŁAŚCICIEL OGŁOSZENIA
      *
      * Jeżeli użytkownik ogląda własne ogłoszenie,
-     * pokazujemy "Chat".
+     * pokazujemy "Chat", który otwiera stronę "Rozmowy".
      */
     if (Number(currentUser.id) === Number(offer.userId)) {
       button.style.display = "block";
       button.textContent = "Chat";
 
-      button.addEventListener("click", async () => {
-        button.disabled = true;
-        button.textContent = "Otwieranie rozmowy...";
-
-        try {
-          const conversationsResponse = await fetch(
-            `${OFFER_DETAILS_API_BASE_URL}/api/conversations`,
-            {
-              method: "GET",
-              credentials: "include",
-            },
-          );
-
-          if (!conversationsResponse.ok) {
-            throw new Error(
-              `Nie udało się pobrać rozmów. HTTP ${conversationsResponse.status}`,
-            );
-          }
-
-          const conversations = await conversationsResponse.json();
-
-          /*
-           * Szukamy rozmowy powiązanej z konkretnym
-           * ogłoszeniem.
-           */
-          const offerConversations = Array.isArray(conversations)
-            ? conversations.filter(
-                (item) => Number(item.offerId) === Number(offer.id),
-              )
-            : [];
-
-          // Jeżeli właściciel ma kilka rozmów dotyczących tego ogłoszenia,
-          // otwieramy tę ostatnio aktualizowaną.
-          const conversation = offerConversations
-            .slice()
-            .sort((first, second) => {
-              const firstDate = new Date(
-                first.updatedAt || first.createdAt || 0,
-              ).getTime();
-
-              const secondDate = new Date(
-                second.updatedAt || second.createdAt || 0,
-              ).getTime();
-
-              return secondDate - firstDate;
-            })[0];
-
-          if (!conversation || !conversation.id) {
-            alert("Nie ma jeszcze żadnej rozmowy dotyczącej tego ogłoszenia.");
-
-            button.disabled = false;
-            button.textContent = "Chat";
-            return;
-          }
-
-          window.location.href =
-            `chat.html?conversationId=${encodeURIComponent(conversation.id)}` +
-            `&offerId=${encodeURIComponent(offer.id)}`;
-        } catch (error) {
-          console.error("Błąd otwierania rozmowy:", error);
-
-          alert(error.message || "Nie udało się otworzyć rozmowy.");
-
-          button.disabled = false;
-          button.textContent = "Chat";
-        }
+      // Właściciel przechodzi na stronę "Rozmowy",
+      // gdzie widzi wszystkie swoje czaty.
+      button.addEventListener("click", () => {
+        window.location.href = "conversations.html";
       });
 
       return;
