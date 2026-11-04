@@ -4,7 +4,9 @@
  * Każde pole <input data-location-picker> dostaje:
  *   - podpowiedzi miejscowości w trakcie pisania (Places API (New)),
  *   - przycisk "Użyj mojej lokalizacji" (geolokalizacja przeglądarki
- *     + Geocoding API, żeby zamienić współrzędne na nazwę miasta).
+ *     + Geocoding API, żeby zamienić współrzędne na nazwę miasta),
+ *   - panel z mapą pod polem: kliknięcie w mapę wybiera miejscowość
+ *     (Geocoding API), a wybrany obszar jest na niej zaznaczony kołem.
  *
  * Jeśli nie ma klucza API albo Google się nie załaduje, pole zostaje
  * zwykłym polem tekstowym - formularze dalej działają.
@@ -51,7 +53,11 @@
     }
 
     mapsPromise = new Promise((resolve, reject) => {
-      if (window.google && window.google.maps && window.google.maps.importLibrary) {
+      if (
+        window.google &&
+        window.google.maps &&
+        window.google.maps.importLibrary
+      ) {
         resolve(window.google.maps);
         return;
       }
@@ -262,7 +268,9 @@
       return "Nie udało się ustalić Twojej lokalizacji.";
     }
 
-    return (error && error.message) || "Nie udało się ustalić Twojej lokalizacji.";
+    return (
+      (error && error.message) || "Nie udało się ustalić Twojej lokalizacji."
+    );
   }
 
   // Zamienia współrzędne na nazwę miejscowości (Geocoding API).
@@ -338,9 +346,7 @@
     }
 
     const { suggestions } =
-      await places.AutocompleteSuggestion.fetchAutocompleteSuggestions(
-        request,
-      );
+      await places.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
 
     return (suggestions || [])
       .map((suggestion) => suggestion.placePrediction)
@@ -690,8 +696,7 @@
         } else if (authFailed) {
           message = "Klucz Google Maps jest nieprawidłowy lub zablokowany.";
         } else {
-          message =
-            "Nie udało się ustalić miejscowości. Wpisz ją ręcznie.";
+          message = "Nie udało się ustalić miejscowości. Wpisz ją ręcznie.";
         }
 
         renderList([], message, false);
@@ -701,6 +706,211 @@
         locateButton.classList.remove("is-loading");
         locateButton.disabled = false;
       }
+    }
+
+    /* ---------- panel z mapą (kliknięcie wybiera miejscowość) ---------- */
+
+    function setupMapPanel() {
+      const field = input.closest(".post-ad-field");
+
+      // Mapa potrzebuje szerokości - pole lokalizacji zajmuje cały wiersz.
+      if (field) {
+        field.classList.add("post-ad-field-full");
+      }
+
+      const panel = document.createElement("div");
+
+      panel.className = "location-map";
+
+      const stage = document.createElement("div");
+
+      stage.className = "location-map-stage";
+
+      const status = document.createElement("div");
+
+      status.className = "location-map-status";
+      status.setAttribute("role", "status");
+      status.textContent =
+        "Możesz też kliknąć na mapie, aby wybrać miejscowość.";
+
+      panel.append(stage, status);
+
+      wrapper.insertAdjacentElement("afterend", panel);
+
+      const DEFAULT_STATUS = status.textContent;
+
+      let map = null;
+      let circle = null;
+      let CircleClass = null;
+      let mapRequestId = 0;
+
+      // Obszar zapisany na polu jest ważny tylko dopóki tekst się zgadza.
+      function readArea() {
+        const data = input.dataset;
+
+        if (
+          !data.placeFor ||
+          data.placeFor !== input.value.trim() ||
+          data.placeLat === undefined ||
+          data.placeLng === undefined
+        ) {
+          return null;
+        }
+
+        const lat = Number(data.placeLat);
+        const lng = Number(data.placeLng);
+        const radius = Number(data.placeRadius);
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+          return null;
+        }
+
+        return {
+          lat,
+          lng,
+          radius:
+            Number.isFinite(radius) && radius > 0
+              ? radius
+              : DEFAULT_AREA_RADIUS,
+        };
+      }
+
+      // Rysuje na mapie obszar wybranej miejscowości (z podpowiedzi,
+      // z geolokalizacji, z kliknięcia albo z zapisanego ogłoszenia).
+      function render() {
+        if (!map || !CircleClass) {
+          return;
+        }
+
+        const area = readArea();
+
+        if (!area) {
+          if (circle) {
+            circle.setMap(null);
+            circle = null;
+          }
+
+          return;
+        }
+
+        const center = { lat: area.lat, lng: area.lng };
+
+        if (!circle) {
+          circle = new CircleClass({
+            map,
+            center,
+            radius: area.radius,
+            strokeColor: "#0e5c53",
+            strokeOpacity: 0.9,
+            strokeWeight: 2,
+            fillColor: "#0e5c53",
+            fillOpacity: 0.16,
+            clickable: false,
+          });
+        } else {
+          circle.setOptions({ center, radius: area.radius });
+        }
+
+        map.fitBounds(circle.getBounds(), 32);
+      }
+
+      async function handleMapClick(event) {
+        if (!event.latLng) {
+          return;
+        }
+
+        const requestId = ++mapRequestId;
+
+        const coords = {
+          lat: event.latLng.lat(),
+          lng: event.latLng.lng(),
+        };
+
+        status.textContent = "Ustalam miejscowość…";
+        panel.classList.add("is-loading");
+
+        try {
+          const place = await reverseGeocodeCity(coords);
+
+          // Użytkownik kliknął już gdzie indziej.
+          if (requestId !== mapRequestId) {
+            return;
+          }
+
+          if (!place || !place.area) {
+            status.textContent =
+              "Nie udało się rozpoznać miejscowości w tym miejscu. Kliknij w inne miejsce albo wpisz ją ręcznie.";
+
+            return;
+          }
+
+          setValue(place.name);
+          setArea(input, place.name, place.area);
+
+          state.sessionToken = null;
+
+          closeList();
+
+          status.textContent = `Wybrano: ${place.name}. ${DEFAULT_STATUS}`;
+        } catch (error) {
+          console.error("Błąd wyboru lokalizacji z mapy:", error);
+
+          if (requestId === mapRequestId) {
+            status.textContent = authFailed
+              ? "Klucz Google Maps jest nieprawidłowy lub zablokowany."
+              : "Nie udało się ustalić miejscowości. Wpisz ją ręcznie.";
+          }
+        } finally {
+          if (requestId === mapRequestId) {
+            panel.classList.remove("is-loading");
+          }
+        }
+      }
+
+      loadGoogleMaps()
+        .then(async (maps) => {
+          const { Map: GoogleMap, Circle } = await maps.importLibrary("maps");
+
+          CircleClass = Circle;
+
+          map = new GoogleMap(stage, {
+            // Środek Polski, dopóki nic nie wybrano.
+            center: { lat: 52.07, lng: 19.48 },
+            zoom: 6,
+            // Na telefonie jeden palec przewija stronę, a nie mapę.
+            gestureHandling: "cooperative",
+            mapTypeControl: false,
+            streetViewControl: false,
+            clickableIcons: false,
+          });
+
+          map.addListener("click", handleMapClick);
+
+          render();
+        })
+        .catch((error) => {
+          console.error(
+            "Nie udało się załadować mapy wyboru lokalizacji:",
+            error,
+          );
+
+          // Bez mapy pole działa dalej jak zwykłe pole z podpowiedziami.
+          panel.hidden = true;
+        });
+
+      // Każda zmiana obszaru na polu (też z edit-offer.js) odświeża mapę.
+      new MutationObserver(render).observe(input, {
+        attributes: true,
+        attributeFilter: [
+          "data-place-for",
+          "data-place-lat",
+          "data-place-lng",
+          "data-place-radius",
+        ],
+      });
+
+      // Ręczna zmiana tekstu unieważnia obszar - zdejmujemy koło z mapy.
+      input.addEventListener("input", render);
     }
 
     /* ---------- zdarzenia ---------- */
@@ -772,6 +982,8 @@
         closeList();
       }
     });
+
+    setupMapPanel();
   }
 
   function init() {

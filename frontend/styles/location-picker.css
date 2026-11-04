@@ -192,3 +192,46 @@
     animation-duration: 3s;
   }
 }
+
+/* =========================
+   MAPA WYBORU LOKALIZACJI
+   ========================= */
+
+.location-map {
+  margin-top: 10px;
+}
+
+.location-map[hidden] {
+  display: none;
+}
+
+.location-map-stage {
+  width: 100%;
+  height: 320px;
+
+  overflow: hidden;
+
+  background: #eaf3ef;
+
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.location-map.is-loading .location-map-stage {
+  cursor: progress;
+}
+
+.location-map-status {
+  margin-top: 8px;
+
+  color: var(--ink-soft);
+
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .location-map-stage {
+    height: 240px;
+  }
+}
