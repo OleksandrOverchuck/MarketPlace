@@ -842,6 +842,15 @@ function getAvatarSrc(avatarUrl) {
   return `${API_BASE_URL}${avatarUrl}`;
 }
 
+function getDefaultAvatarSvg() {
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="8" r="4"></circle>
+      <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
+    </svg>
+  `;
+}
+
 function renderAvatar(user) {
   const avatarSrc = getAvatarSrc(user.avatarUrl);
 
@@ -851,16 +860,20 @@ function renderAvatar(user) {
         src="${escapeHtml(avatarSrc)}"
         alt="Zdjęcie profilowe"
         class="account-avatar-image"
+        onerror="handleAvatarError(this)"
       />
     `;
   }
 
-  return `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="8" r="4"></circle>
-      <path d="M4 21c0-4.2 3.4-7 8-7s8 2.8 8 7"></path>
-    </svg>
-  `;
+  // Brak zdjęcia: domyślna ikonka profilu
+  return getDefaultAvatarSvg();
+}
+
+// Zdjęcie jest w bazie, ale pliku nie da się wczytać (np. brak go na dysku):
+// zamiast uszkodzonego obrazka z napisem pokazujemy domyślną ikonkę.
+function handleAvatarError(img) {
+  img.onerror = null;
+  img.outerHTML = getDefaultAvatarSvg();
 }
 
 function escapeHtml(value) {

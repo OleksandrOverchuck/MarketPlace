@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.BalanceTransaction;
+import com.stripe.model.Charge;
+import com.stripe.param.ChargeRetrieveParams;
 import com.stripe.model.Refund;
 import com.stripe.model.Transfer;
 import com.stripe.model.checkout.Session;
@@ -665,7 +668,7 @@ public class OrderService {
      * a klucz idempotencji gwarantuje, że przy ponowieniu (np. po błędzie
      * zapisu do bazy) pieniądze nie zostaną wypłacone dwa razy.
      */
-    private void releaseFunds(PurchaseOrder order) {
+        private void releaseFunds(PurchaseOrder order) {
 
         if (order.getStripeTransferId() != null) {
             order.setStatus(OrderStatus.COMPLETED);
@@ -677,18 +680,55 @@ public class OrderService {
                 .orElseThrow(() ->
                         new IllegalStateException("Sprzedawca nie ma konta wypłat"));
 
+        // Przelew MUSI być powiązany z płatnością kupującego (source_transaction).
+        String chargeId = order.getStripeChargeId();
+
         try {
+            if ((chargeId == null || chargeId.isBlank())
+                    && order.getStripePaymentIntentId() != null) {
+                chargeId = PaymentIntent
+                        .retrieve(order.getStripePaymentIntentId())
+                        .getLatestCharge();
+                order.setStripeChargeId(chargeId);
+            }
+
+            if (chargeId == null || chargeId.isBlank()) {
+                throw new IllegalStateException(
+                        "Brak powiązanej płatności - nie można wypłacić środków");
+            }
+
+            // Stripe pobiera prowizję od płatności kupującego. Sprzedawcy
+            // przekazujemy najwyżej kwotę netto (po prowizji), inaczej przelew
+            // przekracza dostępne środki (balance_insufficient).
+            long transferAmount = toMinorUnits(order.getAmount());
+
+            Charge charge = Charge.retrieve(
+                    chargeId,
+                    ChargeRetrieveParams.builder()
+                            .addExpand("balance_transaction")
+                            .build(),
+                    null
+            );
+
+            BalanceTransaction balanceTransaction = charge.getBalanceTransactionObject();
+
+            if (balanceTransaction != null && balanceTransaction.getNet() != null) {
+                transferAmount = Math.min(transferAmount, balanceTransaction.getNet());
+            }
+
             Transfer transfer = Transfer.create(
                     TransferCreateParams.builder()
-                            .setAmount(toMinorUnits(order.getAmount()))
+                            .setAmount(transferAmount)
                             .setCurrency(order.getCurrency())
                             .setDestination(sellerAccount.getStripeAccountId())
-                            .setSourceTransaction(order.getStripeChargeId())
+                            .setSourceTransaction(chargeId)
                             .setTransferGroup("ORDER_" + order.getId())
                             .putMetadata("orderId", String.valueOf(order.getId()))
                             .build(),
                     RequestOptions.builder()
-                            .setIdempotencyKey("transfer-order-" + order.getId())
+                            // Kwota w kluczu: bezpieczne ponowienie tej samej wypłaty,
+                            // a poprawiona kwota nie koliduje z wcześniejszą nieudaną próbą.
+                            .setIdempotencyKey("transfer-order-" + order.getId() + "-" + transferAmount)
                             .build()
             );
 
@@ -696,7 +736,7 @@ public class OrderService {
 
         } catch (StripeException e) {
             throw new PaymentGatewayException(
-                    "Nie udało się wypłacić środków sprzedawcy.", e);
+                    "Nie udało się wypłacić środków sprzedawcy: " + e.getMessage(), e);
         }
 
         order.setStatus(OrderStatus.COMPLETED);

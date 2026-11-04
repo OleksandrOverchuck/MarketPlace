@@ -540,12 +540,23 @@ function renderSettingsAvatar(avatarUrl) {
         <img
           src="${escapeSettingsHtml(src)}"
           alt="Zdjęcie profilowe"
+          onerror="handleSettingsAvatarError(this)"
         />
       `;
     } else {
       element.innerHTML = defaultAvatarSvg;
     }
   });
+}
+
+// Zdjęcie jest w bazie, ale pliku nie da się wczytać:
+// zamiast uszkodzonego obrazka pokazujemy domyślną ikonkę.
+function handleSettingsAvatarError(img) {
+  img.onerror = null;
+
+  if (img.parentElement) {
+    img.parentElement.innerHTML = defaultAvatarSvg;
+  }
 }
 
 function getSettingsAvatarSrc(avatarUrl) {
