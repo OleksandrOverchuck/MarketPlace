@@ -1,0 +1,228 @@
+package pl.jollycart.payment;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+
+/*
+ * Zamówienie = jedna transakcja kupna oferty przez JollyCart.
+ *
+ * (Nazwa klasy PurchaseOrder, bo "Order" jest słowem kluczowym JPQL.)
+ *
+ * Powiązania z ofertą i użytkownikami trzymamy jako same identyfikatory
+ * + migawkę tytułu i kwoty. Dzięki temu historia płatności nie zniknie
+ * ani nie zablokuje usunięcia ogłoszenia / konta (brak kluczy obcych),
+ * a późniejsza edycja ceny w ogłoszeniu nie zmieni kwoty zamówienia.
+ */
+@Entity
+@Table(
+        name = "orders",
+        indexes = {
+                @jakarta.persistence.Index(name = "idx_orders_status", columnList = "status"),
+                @jakarta.persistence.Index(name = "idx_orders_buyer", columnList = "buyer_id"),
+                @jakarta.persistence.Index(name = "idx_orders_seller", columnList = "seller_id")
+        }
+)
+public class PurchaseOrder {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "offer_id", nullable = false)
+    private Long offerId;
+
+    @Column(name = "offer_title", nullable = false, length = 150)
+    private String offerTitle;
+
+    @Column(name = "buyer_id", nullable = false)
+    private Long buyerId;
+
+    @Column(name = "seller_id", nullable = false)
+    private Long sellerId;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal amount;
+
+    // Cztery pozostałe kwoty zamówienia (amount = cena towaru).
+    // Nullable, bo stare zamówienia ich nie mają - gettery podstawiają wtedy 0 / amount.
+    @Column(name = "shipping_cost", precision = 10, scale = 2)
+    private BigDecimal shippingCost;
+
+    // Opłata serwisowa JollyCart (ochrona kupującego)
+    @Column(name = "service_fee", precision = 10, scale = 2)
+    private BigDecimal serviceFee;
+
+    // Szacunkowa opłata operatora płatności (Stripe)
+    @Column(name = "payment_fee", precision = 10, scale = 2)
+    private BigDecimal paymentFee;
+
+    // Razem do zapłaty przez kupującego
+    @Column(name = "total_amount", precision = 10, scale = 2)
+    private BigDecimal totalAmount;
+
+    @Column(nullable = false, length = 3)
+    private String currency;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private OrderStatus status;
+
+    @Column(name = "stripe_session_id", unique = true, length = 255)
+    private String stripeSessionId;
+
+    @Column(name = "stripe_checkout_url", length = 2000)
+    private String stripeCheckoutUrl;
+
+    @Column(name = "stripe_payment_intent_id", length = 255)
+    private String stripePaymentIntentId;
+
+    @Column(name = "stripe_charge_id", length = 255)
+    private String stripeChargeId;
+
+    @Column(name = "stripe_transfer_id", length = 255)
+    private String stripeTransferId;
+
+    @Column(name = "checkout_expires_at")
+    private LocalDateTime checkoutExpiresAt;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
+    // Do kiedy sprzedawca musi wysłać towar
+    @Column(name = "ship_deadline")
+    private LocalDateTime shipDeadline;
+
+    @Column(name = "shipped_at")
+    private LocalDateTime shippedAt;
+
+    @Column(name = "delivered_at")
+    private LocalDateTime deliveredAt;
+
+    // Do kiedy kupujący może potwierdzić / zgłosić problem
+    @Column(name = "confirm_deadline")
+    private LocalDateTime confirmDeadline;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    @Column(name = "dispute_reason", length = 500)
+    private String disputeReason;
+
+    // Dane do wysyłki podane przez kupującego przed przejściem do Stripe
+    @Column(name = "shipping_city", length = 100)
+    private String shippingCity;
+
+    @Column(name = "shipping_street", length = 150)
+    private String shippingStreet;
+
+    @Column(name = "shipping_postal_code", length = 10)
+    private String shippingPostalCode;
+
+    @Column(name = "shipping_phone", length = 20)
+    private String shippingPhone;
+
+    // Czerwona kropka przy "Zamówienia": są nowości, których użytkownik jeszcze nie widział
+    @Column(name = "buyer_unread", nullable = false, columnDefinition = "bit(1) default 0")
+    private boolean buyerUnread = false;
+
+    @Column(name = "seller_unread", nullable = false, columnDefinition = "bit(1) default 0")
+    private boolean sellerUnread = false;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    public PurchaseOrder() {
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public Long getId() { return id; }
+    public Long getOfferId() { return offerId; }
+    public void setOfferId(Long offerId) { this.offerId = offerId; }
+    public String getOfferTitle() { return offerTitle; }
+    public void setOfferTitle(String offerTitle) { this.offerTitle = offerTitle; }
+    public Long getBuyerId() { return buyerId; }
+    public void setBuyerId(Long buyerId) { this.buyerId = buyerId; }
+    public Long getSellerId() { return sellerId; }
+    public void setSellerId(Long sellerId) { this.sellerId = sellerId; }
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
+    public BigDecimal getShippingCost() { return shippingCost != null ? shippingCost : BigDecimal.ZERO; }
+    public void setShippingCost(BigDecimal v) { this.shippingCost = v; }
+    public BigDecimal getServiceFee() { return serviceFee != null ? serviceFee : BigDecimal.ZERO; }
+    public void setServiceFee(BigDecimal v) { this.serviceFee = v; }
+    public BigDecimal getPaymentFee() { return paymentFee != null ? paymentFee : BigDecimal.ZERO; }
+    public void setPaymentFee(BigDecimal v) { this.paymentFee = v; }
+    public BigDecimal getTotalAmount() { return totalAmount != null ? totalAmount : amount; }
+    public void setTotalAmount(BigDecimal v) { this.totalAmount = v; }
+    /* Ile dostaje sprzedawca po zakończeniu zamówienia: cena towaru + dostawa. */
+    public BigDecimal getSellerPayout() { return amount.add(getShippingCost()); }
+    public String getCurrency() { return currency; }
+    public void setCurrency(String currency) { this.currency = currency; }
+    public OrderStatus getStatus() { return status; }
+    public void setStatus(OrderStatus status) { this.status = status; }
+    public String getStripeSessionId() { return stripeSessionId; }
+    public void setStripeSessionId(String v) { this.stripeSessionId = v; }
+    public String getStripeCheckoutUrl() { return stripeCheckoutUrl; }
+    public void setStripeCheckoutUrl(String v) { this.stripeCheckoutUrl = v; }
+    public String getStripePaymentIntentId() { return stripePaymentIntentId; }
+    public void setStripePaymentIntentId(String v) { this.stripePaymentIntentId = v; }
+    public String getStripeChargeId() { return stripeChargeId; }
+    public void setStripeChargeId(String v) { this.stripeChargeId = v; }
+    public String getStripeTransferId() { return stripeTransferId; }
+    public void setStripeTransferId(String v) { this.stripeTransferId = v; }
+    public LocalDateTime getCheckoutExpiresAt() { return checkoutExpiresAt; }
+    public void setCheckoutExpiresAt(LocalDateTime v) { this.checkoutExpiresAt = v; }
+    public LocalDateTime getPaidAt() { return paidAt; }
+    public void setPaidAt(LocalDateTime v) { this.paidAt = v; }
+    public LocalDateTime getShipDeadline() { return shipDeadline; }
+    public void setShipDeadline(LocalDateTime v) { this.shipDeadline = v; }
+    public LocalDateTime getShippedAt() { return shippedAt; }
+    public void setShippedAt(LocalDateTime v) { this.shippedAt = v; }
+    public LocalDateTime getDeliveredAt() { return deliveredAt; }
+    public void setDeliveredAt(LocalDateTime v) { this.deliveredAt = v; }
+    public LocalDateTime getConfirmDeadline() { return confirmDeadline; }
+    public void setConfirmDeadline(LocalDateTime v) { this.confirmDeadline = v; }
+    public LocalDateTime getCompletedAt() { return completedAt; }
+    public void setCompletedAt(LocalDateTime v) { this.completedAt = v; }
+    public String getDisputeReason() { return disputeReason; }
+    public void setDisputeReason(String v) { this.disputeReason = v; }
+    public String getShippingCity() { return shippingCity; }
+    public void setShippingCity(String v) { this.shippingCity = v; }
+    public String getShippingStreet() { return shippingStreet; }
+    public void setShippingStreet(String v) { this.shippingStreet = v; }
+    public String getShippingPostalCode() { return shippingPostalCode; }
+    public void setShippingPostalCode(String v) { this.shippingPostalCode = v; }
+    public String getShippingPhone() { return shippingPhone; }
+    public void setShippingPhone(String v) { this.shippingPhone = v; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public boolean isBuyerUnread() { return buyerUnread; }
+    public void setBuyerUnread(boolean v) { this.buyerUnread = v; }
+    public boolean isSellerUnread() { return sellerUnread; }
+    public void setSellerUnread(boolean v) { this.sellerUnread = v; }
+}

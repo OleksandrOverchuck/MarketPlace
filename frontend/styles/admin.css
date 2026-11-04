@@ -1,0 +1,297 @@
+/* =========================================================
+   PANEL ADMINISTRATORA / MODERATORA
+   ========================================================= */
+
+.panel-page {
+  min-height: calc(100vh - 82px);
+  padding: 40px 20px 96px;
+  background: var(--paper);
+}
+
+.panel-container {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.panel-hero {
+  margin-bottom: 22px;
+  padding: 32px 38px;
+
+  border-radius: 20px;
+
+  background: linear-gradient(135deg, #0f6b5f 0%, var(--teal) 55%, #0a4a43 100%);
+  color: var(--white);
+
+  box-shadow: 0 18px 40px rgba(9, 63, 56, 0.22);
+}
+
+.panel-hero h1 {
+  margin: 10px 0 6px;
+  font-size: 30px;
+}
+
+.panel-hero p {
+  opacity: 0.85;
+}
+
+.panel-badge {
+  display: inline-block;
+  padding: 4px 12px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.18);
+
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.panel-message {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+
+  border-radius: 10px;
+
+  font-weight: 600;
+}
+
+.panel-message.ok {
+  background: #e3f1e5;
+  color: #1f5a2b;
+}
+
+.panel-message.error {
+  background: #f8e3df;
+  color: var(--berry);
+}
+
+.panel-message.warn {
+  background: #fbf0d6;
+  color: #7a5200;
+}
+
+.panel-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  margin-bottom: 16px;
+}
+
+.panel-tab {
+  padding: 10px 18px;
+
+  border: 1px solid var(--line);
+  border-radius: 999px;
+
+  background: var(--white);
+  color: var(--ink-soft);
+
+  font-weight: 600;
+  font-size: 14px;
+
+  cursor: pointer;
+}
+
+.panel-tab.active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--white);
+}
+
+.panel-tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.panel-card {
+  padding: 22px;
+
+  border: 1px solid var(--line);
+  border-radius: 16px;
+
+  background: var(--white);
+}
+
+.panel-card h2 {
+  margin-bottom: 8px;
+}
+
+.panel-muted {
+  margin-bottom: 14px;
+  color: var(--ink-soft);
+}
+
+.panel-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  margin-bottom: 16px;
+}
+
+.panel-filters input,
+.panel-filters select,
+.panel-form input {
+  padding: 10px 12px;
+
+  border: 1px solid var(--line);
+  border-radius: 8px;
+
+  background: var(--paper);
+  color: var(--ink);
+
+  font: inherit;
+}
+
+.panel-filters input[type="search"] {
+  flex: 1 1 280px;
+}
+
+.panel-table-wrap {
+  overflow-x: auto;
+}
+
+.panel-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  font-size: 14px;
+}
+
+.panel-table th,
+.panel-table td {
+  padding: 10px 12px;
+
+  border-bottom: 1px solid var(--line);
+
+  text-align: left;
+  vertical-align: middle;
+}
+
+.panel-table th {
+  color: var(--ink-soft);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.panel-table td.empty {
+  padding: 28px;
+
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.panel-table tr.banned td {
+  background: #fbefec;
+}
+
+.panel-pill {
+  display: inline-block;
+  padding: 2px 10px;
+
+  border-radius: 999px;
+
+  background: var(--paper-deep);
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.panel-pill.ADMIN {
+  background: var(--berry);
+  color: var(--white);
+}
+
+.panel-pill.MODERATOR {
+  background: var(--amber);
+}
+
+.panel-pill.BANNED {
+  background: var(--berry);
+  color: var(--white);
+}
+
+.panel-pill.ACTIVE {
+  background: #dcebd9;
+  color: #1f5a2b;
+}
+
+.panel-ban-reason {
+  display: block;
+  max-width: 220px;
+  margin-top: 4px;
+
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.panel-btn {
+  padding: 6px 10px;
+
+  border: 1px solid var(--line);
+  border-radius: 6px;
+
+  background: var(--white);
+  color: var(--ink);
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.panel-btn:hover {
+  background: var(--paper-deep);
+}
+
+.panel-btn.danger {
+  border-color: var(--berry);
+  color: var(--berry);
+}
+
+.panel-btn.danger:hover {
+  background: var(--berry);
+  color: var(--white);
+}
+
+.panel-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-top: 16px;
+
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.panel-form {
+  display: grid;
+  gap: 14px;
+
+  max-width: 420px;
+}
+
+.panel-form label {
+  display: grid;
+  gap: 6px;
+
+  font-weight: 600;
+}
+
+.panel-form .btn {
+  border: 0;
+  cursor: pointer;
+}

@@ -1,0 +1,80 @@
+package pl.jollycart.offer.dto;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import pl.jollycart.offer.Offer;
+import pl.jollycart.offer.OfferStatus;
+import pl.jollycart.offer.OfferType;
+
+public record OfferResponse(
+
+        Long id,
+
+        String title,
+
+        String description,
+
+        BigDecimal price,
+
+        String location,
+
+        OfferType type,
+
+        OfferStatus status,
+
+        Long userId,
+
+        String nickname,
+
+        // Numer telefonu z profilu autora ogłoszenia (null, jeśli go nie podał).
+        // Pobierany na bieżąco, więc zmiana numeru w profilu aktualizuje
+        // wszystkie jego ogłoszenia.
+        String sellerPhone,
+
+        Long categoryId,
+
+        String categoryName,
+
+        LocalDateTime createdAt,
+
+        LocalDateTime updatedAt,
+
+        boolean onlinePaymentEnabled,
+
+        // Orientacyjny obszar lokalizacji do pokazania na mapie (null = brak).
+        Double latitude,
+
+        Double longitude,
+
+        Integer locationRadiusMeters,
+
+        // Koszt dostawy ustawiony przez sprzedawcę (0 = brak)
+        BigDecimal shippingCost
+) {
+
+    public static OfferResponse from(Offer offer) {
+
+        return new OfferResponse(
+                offer.getId(),
+                offer.getTitle(),
+                offer.getDescription(),
+                offer.getPrice(),
+                offer.getLocation(),
+                offer.getType(),
+                offer.getStatus(),
+                offer.getUser().getId(),
+                offer.getUser().getNickname(),
+                offer.getUser().getPhone(),
+                offer.getCategory().getId(),
+                offer.getCategory().getName(),
+                offer.getCreatedAt(),
+                offer.getUpdatedAt(),
+                offer.isOnlinePaymentEnabled(),
+                offer.getLocationLatitude(),
+                offer.getLocationLongitude(),
+                offer.getLocationRadiusMeters(),
+                offer.getShippingCost()
+        );
+    }
+}
