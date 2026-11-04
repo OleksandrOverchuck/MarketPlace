@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -53,6 +54,13 @@ public class OrderController {
                         request.phone()
                 )
         );
+    }
+
+    // Wycena do tabeli kosztów w oknie "Dane do wysyłki" (tylko odczyt)
+    @GetMapping("/quote")
+    public ResponseEntity<OrderService.QuoteResponse> quote(
+            @RequestParam Long offerId) {
+        return ResponseEntity.ok(orderService.quote(offerId));
     }
 
     @GetMapping("/purchases")

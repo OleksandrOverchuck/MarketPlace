@@ -195,7 +195,7 @@ function renderOrderCard(order) {
         <a class="order-title" href="offer-details.html?id=${encodeURIComponent(order.offerId)}">
           ${escapeOrdersHtml(order.offerTitle)}
         </a>
-        <strong class="order-amount">${formatOrderAmount(order.amount)} zł</strong>
+        <strong class="order-amount">${formatOrderAmount(isBuyer ? order.totalAmount : order.sellerPayout)} zł</strong>
       </div>
 
       <div class="order-meta">
@@ -208,10 +208,43 @@ function renderOrderCard(order) {
 
       ${lines.map((l) => `<p class="order-note">${escapeOrdersHtml(l)}</p>`).join("")}
 
+      ${renderBreakdownBlock(order, isBuyer)}
+
       ${shippingBlock}
 
       <div class="order-actions">${renderOrderActions(order, isBuyer)}</div>
     </article>
+  `;
+}
+
+/*
+ * Rozbicie kwoty. Kupujący widzi to samo, co w tabeli przed płatnością
+ * (Razem = kwota na stronie Stripe). Sprzedawca widzi, co do niego trafi.
+ */
+function renderBreakdownBlock(order, isBuyer) {
+  const row = (label, value, cls = "") =>
+    `<div class="order-breakdown-row ${cls}"><span>${label}</span><strong>${formatOrderAmount(value)} zł</strong></div>`;
+
+  if (isBuyer) {
+    return `
+      <div class="order-breakdown">
+        <h3>Rozbicie kwoty</h3>
+        ${row("Cena towaru", order.amount)}
+        ${row("Dostawa", order.shippingCost)}
+        ${row("Opłata serwisowa JollyCart (ochrona kupującego)", order.serviceFee)}
+        ${row("Opłata operatora płatności (Stripe, szacunkowa)", order.paymentFee)}
+        ${row("Razem zapłacono", order.totalAmount, "is-total")}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="order-breakdown">
+      <h3>Rozliczenie</h3>
+      ${row("Cena towaru", order.amount)}
+      ${row("Dostawa", order.shippingCost)}
+      ${row("Do wypłaty dla Ciebie", order.sellerPayout, "is-total")}
+    </div>
   `;
 }
 

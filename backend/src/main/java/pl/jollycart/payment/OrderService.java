@@ -30,6 +30,7 @@ import pl.jollycart.offer.Offer;
 import pl.jollycart.offer.OfferRepository;
 import pl.jollycart.offer.OfferStatus;
 import pl.jollycart.offer.OfferType;
+import pl.jollycart.payment.PriceCalculator.PriceBreakdown;
 import pl.jollycart.user.AccountStatus;
 import pl.jollycart.user.User;
 import pl.jollycart.user.UserRepository;
@@ -64,6 +65,7 @@ public class OrderService {
     private final SellerAccountRepository sellerAccountRepository;
     private final SellerAccountService sellerAccountService;
     private final ApplicationEventPublisher eventPublisher;
+    private final PriceCalculator priceCalculator;
 
     private final String frontendUrl;
     private final String currency;
@@ -79,6 +81,7 @@ public class OrderService {
             SellerAccountRepository sellerAccountRepository,
             SellerAccountService sellerAccountService,
             ApplicationEventPublisher eventPublisher,
+            PriceCalculator priceCalculator,
             @Value("${app.frontend-url}") String frontendUrl,
             @Value("${app.payment.currency:pln}") String currency,
             @Value("${app.payment.checkout-minutes:30}") long checkoutMinutes,
@@ -92,6 +95,7 @@ public class OrderService {
         this.sellerAccountRepository = sellerAccountRepository;
         this.sellerAccountService = sellerAccountService;
         this.eventPublisher = eventPublisher;
+        this.priceCalculator = priceCalculator;
         this.frontendUrl = frontendUrl;
         this.currency = currency.toLowerCase();
         // Stripe wymaga wygaśnięcia sesji najwcześniej za 30 minut
@@ -99,6 +103,54 @@ public class OrderService {
         this.shipHours = shipHours;
         this.confirmHours = confirmHours;
         this.autoDeliverDays = autoDeliverDays;
+    }
+
+    // =====================================================================
+    //  0. WYCENA: tabela kosztów pokazywana w oknie "Dane do wysyłki"
+    // =====================================================================
+
+    public record QuoteResponse(
+            Long offerId,
+            String currency,
+            java.math.BigDecimal itemPrice,
+            java.math.BigDecimal shippingCost,
+            java.math.BigDecimal serviceFee,
+            java.math.BigDecimal paymentFee,
+            java.math.BigDecimal total
+    ) {
+    }
+
+    /*
+     * Tylko odczyt - niczego nie rezerwuje. Przeglądarka niczego nie liczy,
+     * a przy zakupie startCheckout i tak liczy sumę od nowa.
+     */
+    @Transactional(readOnly = true)
+    public QuoteResponse quote(Long offerId) {
+
+        Offer offer = offerRepository.findById(offerId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Oferta nie została znaleziona"));
+
+        if (offer.getType() != OfferType.SALE || !offer.isOnlinePaymentEnabled()) {
+            throw new IllegalArgumentException(
+                    "Ta oferta nie obsługuje płatności przez JollyCart");
+        }
+
+        if (offer.getPrice() == null || offer.getPrice().compareTo(MIN_AMOUNT) < 0) {
+            throw new IllegalArgumentException("Minimalna kwota płatności to 2,00 zł");
+        }
+
+        PriceBreakdown b = priceCalculator.calculate(offer.getPrice(), offer.getShippingCost());
+
+        return new QuoteResponse(
+                offer.getId(),
+                currency,
+                b.itemPrice(),
+                b.shippingCost(),
+                b.serviceFee(),
+                b.paymentFee(),
+                b.total()
+        );
     }
 
     // =====================================================================
@@ -171,7 +223,16 @@ public class OrderService {
         order.setOfferTitle(offer.getTitle());
         order.setBuyerId(buyer.getId());
         order.setSellerId(seller.getId());
-        order.setAmount(offer.getPrice().setScale(2, RoundingMode.HALF_UP));
+
+        // Sumę liczy serwer - liczb od klienta nie bierzemy pod uwagę.
+        PriceBreakdown price = priceCalculator.calculate(
+                offer.getPrice(), offer.getShippingCost());
+
+        order.setAmount(price.itemPrice());
+        order.setShippingCost(price.shippingCost());
+        order.setServiceFee(price.serviceFee());
+        order.setPaymentFee(price.paymentFee());
+        order.setTotalAmount(price.total());
         order.setCurrency(currency);
         order.setStatus(OrderStatus.PENDING_PAYMENT);
         order.setCheckoutExpiresAt(LocalDateTime.now().plusMinutes(checkoutMinutes));
@@ -208,23 +269,9 @@ public class OrderService {
                                     .putMetadata("orderId", String.valueOf(order.getId()))
                                     .build()
                     )
-                    .addLineItem(
-                            SessionCreateParams.LineItem.builder()
-                                    .setQuantity(1L)
-                                    .setPriceData(
-                                            SessionCreateParams.LineItem.PriceData.builder()
-                                                    .setCurrency(currency)
-                                                    .setUnitAmount(toMinorUnits(order.getAmount()))
-                                                    .setProductData(
-                                                            SessionCreateParams.LineItem.PriceData
-                                                                    .ProductData.builder()
-                                                                    .setName(order.getOfferTitle())
-                                                                    .build()
-                                                    )
-                                                    .build()
-                                    )
-                                    .build()
-                    )
+                    // Te same pozycje, co w tabeli w oknie "Dane do wysyłki"
+                    .addLineItem(lineItem(order.getOfferTitle(), order.getAmount()))
+                    .addAllLineItem(extraLineItems(order))
                     .build();
 
             Session session = Session.create(
@@ -618,7 +665,7 @@ public class OrderService {
                 order.getSellerId(),
                 order.getBuyerId(),
                 order.getOfferTitle(),
-                order.getAmount(),
+                order.getSellerPayout(),
                 order.getCurrency(),
                 order.getShipDeadline(),
                 shipHours
@@ -697,10 +744,11 @@ public class OrderService {
                         "Brak powiązanej płatności - nie można wypłacić środków");
             }
 
-            // Stripe pobiera prowizję od płatności kupującego. Sprzedawcy
+            // Sprzedawca dostaje cenę towaru + dostawę; opłata serwisowa zostaje
+            // u JollyCart. Stripe pobiera prowizję od płatności kupującego, więc
             // przekazujemy najwyżej kwotę netto (po prowizji), inaczej przelew
             // przekracza dostępne środki (balance_insufficient).
-            long transferAmount = toMinorUnits(order.getAmount());
+            long transferAmount = toMinorUnits(order.getSellerPayout());
 
             Charge charge = Charge.retrieve(
                     chargeId,
@@ -854,6 +902,44 @@ public class OrderService {
         return new ShippingData(c, s, postal, ph);
     }
 
+    private SessionCreateParams.LineItem lineItem(String name, BigDecimal amount) {
+        return SessionCreateParams.LineItem.builder()
+                .setQuantity(1L)
+                .setPriceData(
+                        SessionCreateParams.LineItem.PriceData.builder()
+                                .setCurrency(currency)
+                                .setUnitAmount(toMinorUnits(amount))
+                                .setProductData(
+                                        SessionCreateParams.LineItem.PriceData
+                                                .ProductData.builder()
+                                                .setName(name)
+                                                .build()
+                                )
+                                .build()
+                )
+                .build();
+    }
+
+    /* Dostawa (tylko gdy > 0) oraz obie opłaty. Stripe nie przyjmuje pozycji za 0 zł. */
+    private List<SessionCreateParams.LineItem> extraLineItems(PurchaseOrder order) {
+
+        List<SessionCreateParams.LineItem> items = new java.util.ArrayList<>();
+
+        if (order.getShippingCost().signum() > 0) {
+            items.add(lineItem("Dostawa", order.getShippingCost()));
+        }
+        if (order.getServiceFee().signum() > 0) {
+            items.add(lineItem("Opłata serwisowa JollyCart (ochrona kupującego)",
+                    order.getServiceFee()));
+        }
+        if (order.getPaymentFee().signum() > 0) {
+            items.add(lineItem("Opłata operatora płatności (Stripe, szacunkowa)",
+                    order.getPaymentFee()));
+        }
+
+        return items;
+    }
+
     // Stripe liczy w groszach: 12,34 zł -> 1234
     private long toMinorUnits(BigDecimal amount) {
         return amount.movePointRight(2)
@@ -884,6 +970,11 @@ public class OrderService {
                 o.getOfferId(),
                 o.getOfferTitle(),
                 o.getAmount(),
+                o.getShippingCost(),
+                o.getServiceFee(),
+                o.getPaymentFee(),
+                o.getTotalAmount(),
+                o.getSellerPayout(),
                 o.getCurrency(),
                 o.getStatus(),
                 o.getBuyerId(),

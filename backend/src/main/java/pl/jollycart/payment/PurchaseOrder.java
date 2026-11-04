@@ -54,6 +54,23 @@ public class PurchaseOrder {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
+    // Cztery pozostałe kwoty zamówienia (amount = cena towaru).
+    // Nullable, bo stare zamówienia ich nie mają - gettery podstawiają wtedy 0 / amount.
+    @Column(name = "shipping_cost", precision = 10, scale = 2)
+    private BigDecimal shippingCost;
+
+    // Opłata serwisowa JollyCart (ochrona kupującego)
+    @Column(name = "service_fee", precision = 10, scale = 2)
+    private BigDecimal serviceFee;
+
+    // Szacunkowa opłata operatora płatności (Stripe)
+    @Column(name = "payment_fee", precision = 10, scale = 2)
+    private BigDecimal paymentFee;
+
+    // Razem do zapłaty przez kupującego
+    @Column(name = "total_amount", precision = 10, scale = 2)
+    private BigDecimal totalAmount;
+
     @Column(nullable = false, length = 3)
     private String currency;
 
@@ -154,6 +171,16 @@ public class PurchaseOrder {
     public void setSellerId(Long sellerId) { this.sellerId = sellerId; }
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
+    public BigDecimal getShippingCost() { return shippingCost != null ? shippingCost : BigDecimal.ZERO; }
+    public void setShippingCost(BigDecimal v) { this.shippingCost = v; }
+    public BigDecimal getServiceFee() { return serviceFee != null ? serviceFee : BigDecimal.ZERO; }
+    public void setServiceFee(BigDecimal v) { this.serviceFee = v; }
+    public BigDecimal getPaymentFee() { return paymentFee != null ? paymentFee : BigDecimal.ZERO; }
+    public void setPaymentFee(BigDecimal v) { this.paymentFee = v; }
+    public BigDecimal getTotalAmount() { return totalAmount != null ? totalAmount : amount; }
+    public void setTotalAmount(BigDecimal v) { this.totalAmount = v; }
+    /* Ile dostaje sprzedawca po zakończeniu zamówienia: cena towaru + dostawa. */
+    public BigDecimal getSellerPayout() { return amount.add(getShippingCost()); }
     public String getCurrency() { return currency; }
     public void setCurrency(String currency) { this.currency = currency; }
     public OrderStatus getStatus() { return status; }

@@ -80,6 +80,7 @@ async function loadOfferForEdit() {
       }
     }
     setOnlinePaymentValue(Boolean(data.onlinePaymentEnabled));
+    setShippingCostValue(data.shippingCost);
     updateCounters();
     await loadExistingImages();
   } catch (error) {
@@ -185,6 +186,7 @@ async function updateOffer(event) {
         status,
         categoryId: Number(categoryId),
         onlinePaymentEnabled: getOnlinePaymentValue(),
+        shippingCost: getShippingCostValue(),
       }),
     });
 

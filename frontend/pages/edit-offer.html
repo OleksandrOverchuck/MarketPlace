@@ -186,6 +186,24 @@
                   <span>Przyjmuj płatności przez JollyCart</span>
                 </label>
                 <span class="post-ad-help" id="online-payment-help"></span>
+
+                <div id="shipping-cost-box" hidden style="margin-top: 12px;">
+                  <label for="shipping-cost" style="font-weight: 600;">Koszt dostawy</label>
+                  <div class="post-ad-price-input">
+                    <input
+                      id="shipping-cost"
+                      type="number"
+                      min="0"
+                      max="10000"
+                      step="0.01"
+                      placeholder="0"
+                    />
+                    <span>zł</span>
+                  </div>
+                </div>
+                <span class="post-ad-help" id="shipping-cost-help" hidden>
+                  Opcjonalnie (domyślnie 0 zł). Cały koszt dostawy trafia do Ciebie.
+                </span>
               </div>
 
               <div

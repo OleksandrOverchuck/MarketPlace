@@ -2,6 +2,7 @@ package pl.jollycart.offer.dto;
 
 import java.math.BigDecimal;
 
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -53,7 +54,12 @@ public record CreateOfferRequest(
 
         @Min(value = 0, message = "Nieprawidłowy promień obszaru")
         @Max(value = 100000, message = "Nieprawidłowy promień obszaru")
-        Integer locationRadiusMeters
+        Integer locationRadiusMeters,
+
+        // Koszt dostawy (opcjonalny, domyślnie 0) - tylko przy płatności przez JollyCart
+        @DecimalMin(value = "0.00", message = "Koszt dostawy nie może być ujemny")
+        @DecimalMax(value = "10000.00", message = "Koszt dostawy jest zbyt wysoki")
+        BigDecimal shippingCost
 ) {
 
     // Zgodność ze starym wywołaniem (bez płatności), m.in. dla testów.
@@ -66,7 +72,7 @@ public record CreateOfferRequest(
             Long categoryId
     ) {
         this(title, description, price, location, type, categoryId,
-                null, null, null, null);
+                null, null, null, null, null);
     }
 
     // Zgodność z wywołaniem bez współrzędnych.
@@ -80,6 +86,6 @@ public record CreateOfferRequest(
             Boolean onlinePaymentEnabled
     ) {
         this(title, description, price, location, type, categoryId,
-                onlinePaymentEnabled, null, null, null);
+                onlinePaymentEnabled, null, null, null, null);
     }
 }

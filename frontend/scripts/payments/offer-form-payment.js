@@ -12,6 +12,11 @@ async function initOfferFormPayment() {
   }
 
   typeSelect.addEventListener("change", applyOfferFormPaymentState);
+
+  const paymentCheckbox = document.getElementById("online-payment");
+  if (paymentCheckbox) {
+    paymentCheckbox.addEventListener("change", updateShippingCostVisibility);
+  }
   applyOfferFormPaymentState();
 
   try {
@@ -47,6 +52,7 @@ function applyOfferFormPaymentState() {
 
   if (!isSale) {
     checkbox.checked = false;
+    updateShippingCostVisibility();
     return;
   }
 
@@ -59,6 +65,54 @@ function applyOfferFormPaymentState() {
   } else {
     help.innerHTML =
       'Aby przyjmować płatności, <a href="settings.html#payouts">dodaj konto bankowe w ustawieniach</a>.';
+  }
+
+  updateShippingCostVisibility();
+}
+
+/* Koszt dostawy ma sens tylko, gdy zaznaczona jest płatność przez JollyCart. */
+function updateShippingCostVisibility() {
+  const checkbox = document.getElementById("online-payment");
+  const box = document.getElementById("shipping-cost-box");
+  const help = document.getElementById("shipping-cost-help");
+
+  if (!box || !checkbox) {
+    return;
+  }
+
+  const visible = checkbox.checked;
+  box.hidden = !visible;
+
+  if (help) {
+    help.hidden = !visible;
+  }
+}
+
+/* Zwraca liczbę >= 0 albo null, gdy pole jest puste / niepoprawne. */
+function getShippingCostValue() {
+  const input = document.getElementById("shipping-cost");
+  const box = document.getElementById("shipping-cost-box");
+
+  if (!input || !box || box.hidden) {
+    return null;
+  }
+
+  const raw = input.value.trim().replace(",", ".");
+
+  if (raw === "") {
+    return 0;
+  }
+
+  const value = Number(raw);
+
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function setShippingCostValue(value) {
+  const input = document.getElementById("shipping-cost");
+
+  if (input) {
+    input.value = value && Number(value) > 0 ? value : "";
   }
 }
 

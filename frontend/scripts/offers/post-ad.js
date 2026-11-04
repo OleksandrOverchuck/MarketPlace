@@ -253,6 +253,7 @@ async function handleCreateOffer(event) {
         type,
         categoryId: Number(categoryId),
         onlinePaymentEnabled: getOnlinePaymentValue(),
+        shippingCost: getShippingCostValue(),
       }),
     });
 

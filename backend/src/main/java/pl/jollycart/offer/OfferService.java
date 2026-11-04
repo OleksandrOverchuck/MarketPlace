@@ -168,6 +168,13 @@ public class OfferService {
                 )
         );
 
+        // Dostawa ma sens tylko przy płatności przez JollyCart
+        offer.setShippingCost(
+                offer.isOnlinePaymentEnabled()
+                        ? request.shippingCost()
+                        : null
+        );
+
         Offer savedOffer = offerRepository.save(offer);
 
         return OfferResponse.from(savedOffer);
@@ -458,6 +465,13 @@ public class OfferService {
         offer.setStatus(request.status());
         offer.setCategory(category);
         offer.setOnlinePaymentEnabled(onlinePayment);
+
+        // Brak pola w żądaniu = bez zmiany; bez płatności online dostawa = 0
+        if (!onlinePayment) {
+            offer.setShippingCost(null);
+        } else if (request.shippingCost() != null) {
+            offer.setShippingCost(request.shippingCost());
+        }
 
         Offer savedOffer = offerRepository.save(offer);
 

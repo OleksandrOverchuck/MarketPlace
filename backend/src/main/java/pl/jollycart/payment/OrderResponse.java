@@ -7,7 +7,16 @@ public record OrderResponse(
         Long id,
         Long offerId,
         String offerTitle,
+        // Cena towaru
         BigDecimal amount,
+        // Dostawa, opłata serwisowa JollyCart, opłata operatora (szacunkowa)
+        BigDecimal shippingCost,
+        BigDecimal serviceFee,
+        BigDecimal paymentFee,
+        // Razem zapłacone przez kupującego
+        BigDecimal totalAmount,
+        // Ile dostaje sprzedawca (cena towaru + dostawa)
+        BigDecimal sellerPayout,
         String currency,
         OrderStatus status,
         Long buyerId,

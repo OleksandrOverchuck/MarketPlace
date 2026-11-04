@@ -65,6 +65,11 @@ public class Offer {
     )
     private boolean onlinePaymentEnabled = false;
 
+    // Koszt dostawy ustawiany przez sprzedawcę (w całości trafia do sprzedawcy).
+    // Null w starych ogłoszeniach = 0 zł.
+    @Column(name = "shipping_cost", precision = 10, scale = 2)
+    private BigDecimal shippingCost = BigDecimal.ZERO;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -176,6 +181,14 @@ public class Offer {
 
     public void setStatus(OfferStatus status) {
         this.status = status;
+    }
+
+    public BigDecimal getShippingCost() {
+        return shippingCost == null ? BigDecimal.ZERO : shippingCost;
+    }
+
+    public void setShippingCost(BigDecimal shippingCost) {
+        this.shippingCost = shippingCost == null ? BigDecimal.ZERO : shippingCost;
     }
 
     public boolean isOnlinePaymentEnabled() {

@@ -54,8 +54,16 @@ async function setupBuyButton(offer) {
 
   if (note) {
     note.hidden = false;
+    const shipping = Number(offer.shippingCost || 0);
+    const shippingText =
+      shipping > 0
+        ? ` Dostawa: ${shipping.toLocaleString("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} zł.`
+        : "";
+
     note.textContent =
-      "Zapłać kartą - pieniądze trafią do sprzedawcy dopiero, gdy potwierdzisz odbiór towaru.";
+      "Zapłać kartą - pieniądze trafią do sprzedawcy dopiero, gdy potwierdzisz odbiór towaru." +
+      shippingText +
+      " Pełny koszt (z opłatami) zobaczysz przed płatnością.";
   }
 
   button.addEventListener("click", () => {
@@ -112,6 +120,10 @@ function openCheckoutModal(offer, currentUser, buyButton) {
           </label>
         </div>
 
+        <div id="checkout-summary" class="checkout-summary" aria-live="polite">
+          <p class="checkout-summary-loading">Liczymy koszty...</p>
+        </div>
+
         <p id="checkout-error" class="checkout-error" role="alert" hidden></p>
 
         <div class="checkout-actions">
@@ -128,6 +140,11 @@ function openCheckoutModal(offer, currentUser, buyButton) {
   const errorBox = backdrop.querySelector("#checkout-error");
   const submit = backdrop.querySelector("#checkout-submit");
   const cancel = backdrop.querySelector("#checkout-cancel");
+
+  // Tabela kosztów liczona przez serwer; "Dalej" aktywne dopiero po jej wczytaniu
+  const summary = backdrop.querySelector("#checkout-summary");
+  submit.disabled = true;
+  loadCheckoutSummary(offer.id, summary, submit);
 
   // Telefon z profilu jako podpowiedź (kupujący może go zmienić)
   if (currentUser?.phone) {
@@ -147,7 +164,7 @@ function openCheckoutModal(offer, currentUser, buyButton) {
   };
 
   const onKeyDown = (event) => {
-    if (event.key === "Escape" && !submit.disabled) {
+    if (event.key === "Escape" && !cancel.disabled) {
       close();
     }
   };
@@ -155,7 +172,7 @@ function openCheckoutModal(offer, currentUser, buyButton) {
   document.addEventListener("keydown", onKeyDown);
   cancel.addEventListener("click", close);
   backdrop.addEventListener("click", (event) => {
-    if (event.target === backdrop && !submit.disabled) {
+    if (event.target === backdrop && !cancel.disabled) {
       close();
     }
   });
@@ -228,4 +245,66 @@ function openCheckoutModal(offer, currentUser, buyButton) {
       submit.textContent = "Dalej do płatności";
     }
   });
+}
+
+/* ---------- Podsumowanie płatności (tabela kosztów z backendu) ---------- */
+
+function formatCheckoutMoney(value) {
+  return `${Number(value).toLocaleString("pl-PL", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} zł`;
+}
+
+async function loadCheckoutSummary(offerId, container, submitButton) {
+  try {
+    const response = await fetch(
+      `${BUY_API_BASE_URL}/api/orders/quote?offerId=${encodeURIComponent(offerId)}`,
+      { method: "GET", credentials: "include" },
+    );
+
+    const quote = await response.json().catch(() => null);
+
+    if (!response.ok || !quote) {
+      throw new Error(quote?.message || "Nie udało się wyliczyć kosztów.");
+    }
+
+    const rows = [
+      ["Cena towaru", quote.itemPrice],
+      ["Dostawa", quote.shippingCost],
+      ["Opłata serwisowa JollyCart (ochrona kupującego, 3%)", quote.serviceFee],
+      ["Opłata operatora płatności (Stripe, szacunkowa)", quote.paymentFee],
+    ];
+
+    container.innerHTML = `
+      <table class="checkout-summary-table">
+        <thead>
+          <tr><th>Pozycja</th><th>Kwota</th></tr>
+        </thead>
+        <tbody>
+          ${rows
+            .map(
+              ([label, value]) =>
+                `<tr><td>${label}</td><td>${formatCheckoutMoney(value)}</td></tr>`,
+            )
+            .join("")}
+        </tbody>
+        <tfoot>
+          <tr><td>Razem do zapłaty</td><td>${formatCheckoutMoney(quote.total)}</td></tr>
+        </tfoot>
+      </table>
+      <p class="checkout-summary-note">
+        W razie uzasadnionego problemu z zamówieniem zwracamy całą wpłaconą kwotę.
+      </p>
+    `;
+
+    submitButton.disabled = false;
+  } catch (error) {
+    container.innerHTML = "";
+    const errorLine = document.createElement("p");
+    errorLine.className = "checkout-error";
+    errorLine.setAttribute("role", "alert");
+    errorLine.textContent = error.message;
+    container.appendChild(errorLine);
+  }
 }

@@ -47,7 +47,10 @@ public record OfferResponse(
 
         Double longitude,
 
-        Integer locationRadiusMeters
+        Integer locationRadiusMeters,
+
+        // Koszt dostawy ustawiony przez sprzedawcę (0 = brak)
+        BigDecimal shippingCost
 ) {
 
     public static OfferResponse from(Offer offer) {
@@ -70,7 +73,8 @@ public record OfferResponse(
                 offer.isOnlinePaymentEnabled(),
                 offer.getLocationLatitude(),
                 offer.getLocationLongitude(),
-                offer.getLocationRadiusMeters()
+                offer.getLocationRadiusMeters(),
+                offer.getShippingCost()
         );
     }
 }

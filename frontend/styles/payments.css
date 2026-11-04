@@ -291,3 +291,84 @@
     gap: 0;
   }
 }
+
+/* ---------- Podsumowanie płatności (okno + karta zamówienia) ---------- */
+
+.checkout-summary {
+  margin: 4px 0 16px;
+}
+
+.checkout-summary-loading {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.checkout-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.checkout-summary-table th,
+.checkout-summary-table td {
+  padding: 6px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.checkout-summary-table th:last-child,
+.checkout-summary-table td:last-child {
+  text-align: right;
+  white-space: nowrap;
+  padding-left: 12px;
+}
+
+.checkout-summary-table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  opacity: 0.7;
+}
+
+.checkout-summary-table tfoot td {
+  border-bottom: 0;
+  padding-top: 10px;
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: var(--teal-dark);
+}
+
+.checkout-summary-note {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.order-breakdown {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.order-breakdown h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  color: var(--teal-dark);
+}
+
+.order-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  font-size: 0.9rem;
+}
+
+.order-breakdown-row.is-total {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-weight: 700;
+}
