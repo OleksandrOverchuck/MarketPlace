@@ -372,3 +372,212 @@
   border-top: 1px solid var(--line);
   font-weight: 700;
 }
+
+/* =========================
+   OKNO "ZGŁOŚ PROBLEM"
+   ========================= */
+
+body.dispute-modal-open {
+  overflow: hidden;
+}
+
+.dispute-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+
+  padding: 24px 16px;
+
+  overflow-y: auto;
+
+  background: rgba(28, 35, 33, 0.55);
+}
+
+.dispute-dialog {
+  width: 100%;
+  max-width: 560px;
+
+  margin: auto;
+
+  background: #ffffff;
+  color: var(--ink);
+
+  border-radius: 16px;
+
+  box-shadow: 0 24px 60px rgba(28, 35, 33, 0.3);
+}
+
+.dispute-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  padding: 24px;
+}
+
+.dispute-form h2 {
+  margin: 0;
+
+  font-size: 22px;
+}
+
+.dispute-order {
+  margin: 0;
+
+  font-weight: 700;
+  color: var(--teal-dark);
+}
+
+.dispute-info {
+  margin: 0;
+
+  color: var(--ink-soft);
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.dispute-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dispute-field > span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dispute-field b {
+  color: #c0392b;
+}
+
+.dispute-field input[type="text"],
+.dispute-field textarea {
+  width: 100%;
+
+  padding: 11px 13px;
+
+  font: inherit;
+
+  border: 1px solid var(--line);
+  border-radius: 10px;
+
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.dispute-field textarea {
+  resize: vertical;
+}
+
+.dispute-field input[type="text"]:focus,
+.dispute-field textarea:focus {
+  outline: 3px solid rgba(14, 92, 83, 0.25);
+  border-color: var(--teal);
+}
+
+.dispute-counter,
+.dispute-hint {
+  color: var(--ink-soft);
+
+  font-size: 12px;
+}
+
+.dispute-counter {
+  align-self: flex-end;
+}
+
+.dispute-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dispute-previews:empty {
+  display: none;
+}
+
+.dispute-preview {
+  position: relative;
+
+  width: 84px;
+  height: 84px;
+
+  overflow: hidden;
+
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.dispute-preview img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+.dispute-preview-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+
+  width: 22px;
+  height: 22px;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(28, 35, 33, 0.8);
+  color: #ffffff;
+
+  font-size: 16px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.dispute-field > .order-button {
+  align-self: flex-start;
+}
+
+.dispute-error {
+  margin: 0;
+
+  padding: 10px 12px;
+
+  border-radius: 10px;
+
+  background: #fdecea;
+  color: #8a1f14;
+
+  font-size: 14px;
+}
+
+.dispute-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 520px) {
+  .dispute-form {
+    padding: 18px;
+  }
+
+  .dispute-buttons {
+    flex-direction: column-reverse;
+  }
+
+  .dispute-buttons .order-button {
+    width: 100%;
+  }
+}

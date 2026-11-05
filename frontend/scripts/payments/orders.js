@@ -179,7 +179,8 @@ function renderOrderCard(order) {
 
   if (order.status === "DISPUTED") {
     lines.push(
-      `Środki są wstrzymane do decyzji administratora. Powód zgłoszenia: ${order.disputeReason || "-"}`,
+      `Zgłoszenie „${order.disputeReason || "problem z zamówieniem"}" czeka na rozpatrzenie. ` +
+        "Środki są wstrzymane do decyzji administratora lub moderatora.",
     );
   }
 
@@ -316,19 +317,13 @@ async function handleOrderAction(event) {
 
   let body = null;
 
+  // Zgłoszenie problemu: okno z tytułem, opisem i zdjęciami
   if (action === "dispute") {
-    const reason = window.prompt("Opisz, jaki jest problem z zamówieniem:");
+    const orderTitle =
+      card.querySelector(".order-title")?.textContent.trim() || "";
 
-    if (reason === null) {
-      return;
-    }
-
-    if (!reason.trim()) {
-      showOrdersBanner("Opis problemu jest wymagany.", true);
-      return;
-    }
-
-    body = { reason: reason.trim() };
+    openDisputeModal(orderId, orderTitle);
+    return;
   }
 
   if (
@@ -354,6 +349,297 @@ async function handleOrderAction(event) {
   }
 
   await loadOrders();
+}
+
+/* =========================
+   OKNO "ZGŁOŚ PROBLEM"
+   ========================= */
+
+const DISPUTE_MAX_IMAGES = 5;
+const DISPUTE_MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const DISPUTE_MAX_TITLE = 150;
+const DISPUTE_MAX_DESCRIPTION = 2000;
+
+function openDisputeModal(orderId, orderTitle) {
+  if (document.getElementById("dispute-modal")) {
+    return;
+  }
+
+  const files = [];
+
+  const overlay = document.createElement("div");
+
+  overlay.id = "dispute-modal";
+  overlay.className = "dispute-modal";
+
+  overlay.innerHTML = `
+    <div class="dispute-dialog" role="dialog" aria-modal="true" aria-labelledby="dispute-heading">
+      <form class="dispute-form" novalidate>
+        <h2 id="dispute-heading">Zgłoś problem z zamówieniem</h2>
+
+        <p class="dispute-order">${escapeOrdersHtml(orderTitle)}</p>
+
+        <p class="dispute-info">
+          Po wysłaniu zgłoszenia środki zostaną wstrzymane. Administrator lub
+          moderator przejrzy opis i zdjęcia, a następnie zdecyduje, czy zwrócić
+          pieniądze Tobie, czy wypłacić je sprzedawcy.
+        </p>
+
+        <label class="dispute-field">
+          <span>Tytuł zgłoszenia <b>*</b></span>
+          <input type="text" name="title" maxlength="${DISPUTE_MAX_TITLE}"
+                 placeholder="Np. Towar nie działa / inny niż w opisie" autocomplete="off" />
+        </label>
+
+        <label class="dispute-field">
+          <span>Opis problemu <b>*</b></span>
+          <textarea name="description" rows="6" maxlength="${DISPUTE_MAX_DESCRIPTION}"
+                    placeholder="Opisz dokładnie, co jest nie tak z towarem lub przesyłką..."></textarea>
+          <small class="dispute-counter" data-dispute-counter>0 / ${DISPUTE_MAX_DESCRIPTION}</small>
+        </label>
+
+        <div class="dispute-field">
+          <span>Zdjęcia (opcjonalnie)</span>
+
+          <div class="dispute-previews" data-dispute-previews></div>
+
+          <button type="button" class="order-button is-secondary" data-dispute-add>
+            Dodaj zdjęcia
+          </button>
+
+          <input type="file" data-dispute-file multiple hidden
+                 accept=".png,.jpg,.jpeg,image/png,image/jpeg" />
+
+          <small class="dispute-hint">
+            Do ${DISPUTE_MAX_IMAGES} zdjęć, PNG lub JPG, maks. 5 MB każde.
+          </small>
+        </div>
+
+        <p class="dispute-error" data-dispute-error role="alert" hidden></p>
+
+        <div class="dispute-buttons">
+          <button type="button" class="order-button is-secondary" data-dispute-cancel>
+            Anuluj
+          </button>
+          <button type="submit" class="order-button is-danger" data-dispute-submit>
+            Wyślij zgłoszenie
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.classList.add("dispute-modal-open");
+
+  const form = overlay.querySelector("form");
+  const titleInput = form.elements.title;
+  const descriptionInput = form.elements.description;
+  const counter = overlay.querySelector("[data-dispute-counter]");
+  const fileInput = overlay.querySelector("[data-dispute-file]");
+  const previews = overlay.querySelector("[data-dispute-previews]");
+  const addButton = overlay.querySelector("[data-dispute-add]");
+  const errorBox = overlay.querySelector("[data-dispute-error]");
+  const submitButton = overlay.querySelector("[data-dispute-submit]");
+  const cancelButton = overlay.querySelector("[data-dispute-cancel]");
+
+  let submitting = false;
+
+  function showError(message) {
+    errorBox.textContent = message || "";
+    errorBox.hidden = !message;
+  }
+
+  function close() {
+    if (submitting) {
+      return;
+    }
+
+    previews
+      .querySelectorAll("img")
+      .forEach((img) => URL.revokeObjectURL(img.src));
+
+    document.removeEventListener("keydown", onKeydown);
+    document.body.classList.remove("dispute-modal-open");
+    overlay.remove();
+  }
+
+  function onKeydown(event) {
+    if (event.key === "Escape") {
+      close();
+    }
+  }
+
+  function renderPreviews() {
+    previews
+      .querySelectorAll("img")
+      .forEach((img) => URL.revokeObjectURL(img.src));
+
+    previews.replaceChildren();
+
+    files.forEach((file, index) => {
+      const item = document.createElement("div");
+
+      item.className = "dispute-preview";
+
+      const img = document.createElement("img");
+
+      img.src = URL.createObjectURL(file);
+      img.alt = file.name;
+
+      const remove = document.createElement("button");
+
+      remove.type = "button";
+      remove.className = "dispute-preview-remove";
+      remove.setAttribute("aria-label", `Usuń zdjęcie ${file.name}`);
+      remove.textContent = "×";
+      remove.addEventListener("click", () => {
+        files.splice(index, 1);
+        renderPreviews();
+      });
+
+      item.append(img, remove);
+      previews.appendChild(item);
+    });
+
+    addButton.disabled = files.length >= DISPUTE_MAX_IMAGES;
+  }
+
+  function addFiles(selected) {
+    showError("");
+
+    for (const file of selected) {
+      const name = file.name.toLowerCase();
+      const typeOk = file.type === "image/png" || file.type === "image/jpeg";
+      const extOk =
+        name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg");
+
+      if (!typeOk || !extOk) {
+        showError(`„${file.name}": dozwolone są tylko pliki PNG i JPG.`);
+        continue;
+      }
+
+      if (file.size > DISPUTE_MAX_IMAGE_BYTES) {
+        showError(`„${file.name}" jest większe niż 5 MB.`);
+        continue;
+      }
+
+      if (files.length >= DISPUTE_MAX_IMAGES) {
+        showError(`Możesz dodać najwyżej ${DISPUTE_MAX_IMAGES} zdjęć.`);
+        break;
+      }
+
+      files.push(file);
+    }
+
+    renderPreviews();
+  }
+
+  addButton.addEventListener("click", () => fileInput.click());
+
+  fileInput.addEventListener("change", () => {
+    addFiles(Array.from(fileInput.files));
+    fileInput.value = "";
+  });
+
+  descriptionInput.addEventListener("input", () => {
+    counter.textContent = `${descriptionInput.value.length} / ${DISPUTE_MAX_DESCRIPTION}`;
+  });
+
+  cancelButton.addEventListener("click", close);
+
+  overlay.addEventListener("mousedown", (event) => {
+    if (event.target === overlay) {
+      close();
+    }
+  });
+
+  document.addEventListener("keydown", onKeydown);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (submitting) {
+      return;
+    }
+
+    const title = titleInput.value.trim();
+    const description = descriptionInput.value.trim();
+
+    if (!title) {
+      showError("Podaj tytuł zgłoszenia.");
+      titleInput.focus();
+      return;
+    }
+
+    if (!description) {
+      showError("Opisz, jaki jest problem.");
+      descriptionInput.focus();
+      return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("title", title);
+    formData.append("description", description);
+    files.forEach((file) => formData.append("files", file, file.name));
+
+    submitting = true;
+    submitButton.disabled = true;
+    cancelButton.disabled = true;
+    submitButton.textContent = "Wysyłanie...";
+    showError("");
+
+    try {
+      const response = await fetch(
+        `${ORDERS_API_BASE_URL}/api/orders/${encodeURIComponent(orderId)}/dispute`,
+        {
+          method: "POST",
+          credentials: "include",
+          // Bez Content-Type - przeglądarka sama doda boundary dla multipart
+          body: formData,
+        },
+      );
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const error = new Error(
+          data?.message ||
+            (response.status === 413
+              ? "Zdjęcia są za duże. Zmniejsz ich liczbę lub rozmiar."
+              : "Nie udało się wysłać zgłoszenia."),
+        );
+
+        error.status = response.status;
+        throw error;
+      }
+
+      submitting = false;
+      close();
+
+      showOrdersBanner(
+        "Zgłoszenie zostało wysłane. Środki są wstrzymane do decyzji administratora lub moderatora.",
+        false,
+      );
+
+      await loadOrders();
+    } catch (error) {
+      if (error.status === 401 || error.status === 403) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      submitting = false;
+      submitButton.disabled = false;
+      cancelButton.disabled = false;
+      submitButton.textContent = "Wyślij zgłoszenie";
+      showError(error.message);
+    }
+  });
+
+  renderPreviews();
+  titleInput.focus();
 }
 
 async function ordersApi(path, method, body) {

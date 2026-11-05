@@ -102,6 +102,10 @@
           <button type="button" class="panel-tab" data-tab="offers">
             Ogłoszenia
           </button>
+          <button type="button" class="panel-tab" data-tab="disputes">
+            Zgłoszenia
+            <span class="panel-tab-badge" id="disputes-badge" hidden>0</span>
+          </button>
           <button
             type="button"
             class="panel-tab"
@@ -203,6 +207,32 @@
           </div>
 
           <div class="panel-pager" id="offers-pager"></div>
+        </section>
+
+        <!-- ZGŁOSZENIA PROBLEMÓW Z ZAMÓWIENIAMI -->
+        <section class="panel-card" id="tab-disputes" hidden>
+          <div id="disputes-overview">
+            <div class="dispute-subtabs" role="tablist">
+              <button
+                type="button"
+                class="dispute-subtab active"
+                data-dispute-status="OPEN"
+              >
+                Aktualne
+              </button>
+              <button
+                type="button"
+                class="dispute-subtab"
+                data-dispute-status="RESOLVED"
+              >
+                Rozwiązane
+              </button>
+            </div>
+
+            <div id="disputes-list" class="dispute-list"></div>
+          </div>
+
+          <div id="dispute-detail" class="dispute-detail" hidden></div>
         </section>
 
         <!-- DZIENNIK -->

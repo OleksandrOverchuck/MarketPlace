@@ -2,6 +2,7 @@ package pl.jollycart.payment;
 
 import java.util.List;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,9 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import pl.jollycart.dispute.DisputeService;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -29,13 +32,12 @@ public class OrderController {
     ) {
     }
 
-    public record DisputeRequest(String reason) {
-    }
-
     private final OrderService orderService;
+    private final DisputeService disputeService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, DisputeService disputeService) {
         this.orderService = orderService;
+        this.disputeService = disputeService;
     }
 
     // "Kup przez JollyCart" -> rezerwacja oferty + adres płatności Stripe
@@ -114,14 +116,19 @@ public class OrderController {
         return ResponseEntity.ok(orderService.confirmOrder(authentication.getName(), id));
     }
 
-    @PostMapping("/{id}/dispute")
+    // Zgłoszenie problemu: tytuł + opis + opcjonalne zdjęcia (multipart/form-data).
+    // Walidacja (puste pola, limity) jest w DisputeService - komunikaty po polsku.
+    @PostMapping(value = "/{id}/dispute", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<OrderResponse> dispute(
             @PathVariable Long id,
-            @RequestBody DisputeRequest request,
+            @RequestParam(value = "title", required = false) String title,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files,
             Authentication authentication
     ) {
         return ResponseEntity.ok(
-                orderService.openDispute(authentication.getName(), id, request.reason())
+                disputeService.openDispute(
+                        authentication.getName(), id, title, description, files)
         );
     }
 }
