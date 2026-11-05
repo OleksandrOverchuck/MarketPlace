@@ -235,3 +235,14 @@
     height: 240px;
   }
 }
+
+.location-map-status.is-error {
+  padding: 8px 10px;
+
+  border-radius: 8px;
+
+  background: #fdecea;
+  color: #8a1f14;
+
+  font-weight: 600;
+}

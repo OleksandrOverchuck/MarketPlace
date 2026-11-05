@@ -279,10 +279,26 @@
 
     const geocoder = new geocoding.Geocoder();
 
-    const { results } = await geocoder.geocode({
-      location: coords,
-      language: LANGUAGE,
-    });
+    let results = [];
+
+    try {
+      const response = await geocoder.geocode({
+        location: coords,
+        language: LANGUAGE,
+      });
+
+      results = response.results || [];
+    } catch (error) {
+      // Miejsce bez danych (np. morze, pustkowie) - to nie jest błąd klucza
+      // ani sieci, tylko brak miejscowości w tym punkcie.
+      const code = String((error && (error.code || error.message)) || "");
+
+      if (code.includes("ZERO_RESULTS")) {
+        return null;
+      }
+
+      throw error;
+    }
 
     const preferredTypes = [
       "locality",
@@ -291,23 +307,24 @@
       "administrative_area_level_2",
     ];
 
+    // Nazwę i obszar bierzemy z TEGO SAMEGO wyniku, który sam jest miejscowością
+    // (a nie z adresu ulicy) - dzięki temu nie zapisujemy dokładnego punktu,
+    // a przy kliknięciu poza miastem (wieś, pole) wybierana jest gmina/powiat
+    // zamiast braku wyniku.
     for (const type of preferredTypes) {
-      for (const result of results || []) {
+      for (const result of results) {
+        if (!(result.types || []).includes(type) || !result.geometry) {
+          continue;
+        }
+
         const component = (result.address_components || []).find((item) =>
           item.types.includes(type),
         );
 
-        if (component) {
-          // Obszar bierzemy z wyniku o typie miejscowości, a nie z adresu
-          // ulicy - żeby nie zapisać dokładnego miejsca, w którym stoi osoba.
-          const areaResult = (results || []).find((item) =>
-            (item.types || []).includes(type),
-          );
+        const area = areaFromGeometry(result.geometry);
 
-          return {
-            name: component.long_name,
-            area: areaResult ? areaFromGeometry(areaResult.geometry) : null,
-          };
+        if (component && area) {
+          return { name: component.long_name, area };
         }
       }
     }
@@ -739,6 +756,11 @@
 
       const DEFAULT_STATUS = status.textContent;
 
+      function setStatus(text, isError = false) {
+        status.textContent = text;
+        status.classList.toggle("is-error", isError);
+      }
+
       let map = null;
       let circle = null;
       let CircleClass = null;
@@ -826,7 +848,7 @@
           lng: event.latLng.lng(),
         };
 
-        status.textContent = "Ustalam miejscowość…";
+        setStatus("Ustalam miejscowość…");
         panel.classList.add("is-loading");
 
         try {
@@ -838,8 +860,10 @@
           }
 
           if (!place || !place.area) {
-            status.textContent =
-              "Nie udało się rozpoznać miejscowości w tym miejscu. Kliknij w inne miejsce albo wpisz ją ręcznie.";
+            setStatus(
+              "W tym miejscu nie znaleziono miejscowości. Kliknij bliżej miasta lub wsi albo wpisz ją ręcznie.",
+              true,
+            );
 
             return;
           }
@@ -851,14 +875,17 @@
 
           closeList();
 
-          status.textContent = `Wybrano: ${place.name}. ${DEFAULT_STATUS}`;
+          setStatus(`Wybrano: ${place.name}. ${DEFAULT_STATUS}`);
         } catch (error) {
           console.error("Błąd wyboru lokalizacji z mapy:", error);
 
           if (requestId === mapRequestId) {
-            status.textContent = authFailed
-              ? "Klucz Google Maps jest nieprawidłowy lub zablokowany."
-              : "Nie udało się ustalić miejscowości. Wpisz ją ręcznie.";
+            setStatus(
+              authFailed
+                ? "Klucz Google Maps jest nieprawidłowy lub zablokowany."
+                : "Nie udało się ustalić miejscowości (błąd Google Maps). Spróbuj ponownie lub wpisz ją ręcznie.",
+              true,
+            );
           }
         } finally {
           if (requestId === mapRequestId) {
